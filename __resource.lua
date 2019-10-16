@@ -4,13 +4,16 @@ description 'ESX UteKnark by DemmyDemon and Breze'
 dependencies {'es_extended','mysql-async'}
 
 shared_scripts {
+    '@es_extended/locale.lua',
+    'locales/*.lua',
     'config.lua',
     'octree.lua',
-    'locales\*.lua',
+    'growth.lua',
 }
 client_scripts {
     'cl_uteknark.lua',
 }
 server_scripts {
+    '@mysql-async/lib/MySQL.lua',
     'sv_uteknark.lua',
 }
