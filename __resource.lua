@@ -11,6 +11,7 @@ shared_scripts {
     'growth.lua',
 }
 client_scripts {
+    'debug.lua',
     'cl_uteknark.lua',
 }
 server_scripts {
