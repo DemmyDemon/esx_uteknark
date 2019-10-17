@@ -22,7 +22,7 @@ Config = {
         -- What soil types can you grow on, and what are their multiplers/divisors? Higher is better.
         -- 1.5 means Grow/1.5 and Wait*1.5
         [2409420175] = 1.0,
-        [951832588] = 1.0,
+        [951832588] = 0.5,
         [3008270349] = 0.8,
         [3833216577] = 1.0,
         [223086562] = 1.1,
