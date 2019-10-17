@@ -1,8 +1,8 @@
 Config = {
     Locale = 'en',
     Distance = { -- All distances in meters
-        Draw = 200,     -- How close to a plant do you need to be to see it?
-        Interact = 2,   -- How close do you need to be to interact?
+        Draw = 150,     -- How close to a plant do you need to be to see it?
+        Interact = 1.5,   -- How close do you need to be to interact?
         Space = 2,      -- How far apart do the plants need to be planted?
         Above = 4,      -- How much clear space above the planting space do you need to plant?
     },
