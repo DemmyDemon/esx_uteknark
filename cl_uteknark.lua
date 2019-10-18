@@ -41,7 +41,7 @@ function getPlantingLocation(visible)
                         DrawLine(playerCoord, hitLocation, 0, 255, 0, 100)
                         debug('~g~planting OK')
                     end
-                    return true,'ok', hitLocation, surfaceNormal, material
+                    return true,'planting_ok', hitLocation, surfaceNormal, material
                 else
                     if visible then
                         DebugSphere(hitLocation, 0.1, 0, 128, 0, 100)
@@ -101,7 +101,7 @@ function DrawIndicator(location, r, g, b, a)
         0.0, 0.0, 0.0, -- rotation
         range, range, range, -- scale
         r, g, b, a, -- color
-        true, -- bob
+        false, -- bob
         false, -- face camera
         2, -- dunno, lol, 100% cargo cult
         false, -- rotates
@@ -112,29 +112,29 @@ end
 
 Citizen.CreateThread(function()
     local drawDistance = Config.Distance.Draw
-    -- drawDistance = 10 -- For testing purposes
-    drawDistance = drawDistance * 1.1 -- So they don't fight about it, culling is at a slightly longer range
+    drawDistance = drawDistance * 1.01 -- So they don't fight about it, culling is at a slightly longer range
     while true do
-        local waitAt = math.floor(math.sqrt(#activePlants))
-        local myLocation = GetEntityCoords(PlayerPedId())
-        local closestDistance
-        local closestPlant
-        for i,plant in ipairs(activePlants) do
-            local distance = #(plant.at - myLocation)
-            if distance > drawDistance then
-                DeleteObject(plant.object)
-                plant.node.data.object = nil
-                table.remove(activePlants, i)
-            elseif not closestDistance or distance < closestDistance then
-                closestDistance = distance
-                closestPlant = plant
-            end
-        end
         if #activePlants > 0 then
             debug(#activePlants,'active plants')
+            local myLocation = GetEntityCoords(PlayerPedId())
+            local closestDistance
+            local closestPlant
+            for i,plant in ipairs(activePlants) do
+                local distance = #(plant.at - myLocation)
+                if distance > drawDistance then
+                    DeleteObject(plant.object)
+                    plant.node.data.object = nil
+                    table.remove(activePlants, i)
+                elseif not closestDistance or distance < closestDistance then
+                    closestDistance = distance
+                    closestPlant = plant
+                end
+            end
             debug('Closest plant at',closestDistance,'meters')
             if closestDistance <= Config.Distance.Interact then
-                DrawIndicator(closestPlant.at, 0, 255, 0, 128)
+                local stage = Growth[closestPlant.stage]
+                debug('Closest pant is stage', closestPlant.stage)
+                DrawIndicator(closestPlant.at + stage.marker.offset, 0, 255, 0, 128)
                 debug('Within intraction distance!')
             end
             Citizen.Wait(0)
@@ -146,7 +146,6 @@ end)
 
 Citizen.CreateThread(function()
     local drawDistance = Config.Distance.Draw
-    -- drawDistance = 10 -- For testing purposes
     while true do
         local here = GetEntityCoords(PlayerPedId())
         local hits = octree:searchSphere(here, drawDistance)
@@ -159,8 +158,8 @@ Citizen.CreateThread(function()
                 SetEntityHeading(weed, heading)
                 FreezeEntityPosition(weed, true)
                 SetEntityCollision(weed, false, true)
-                SetEntityLodDist(weed, drawDistance)
-                table.insert(activePlants, {node=entry, object=weed, at=entry.bounds.location})
+                SetEntityLodDist(weed, math.floor(drawDistance))
+                table.insert(activePlants, {node=entry, object=weed, at=entry.bounds.location, stage=stage})
                 entry.data.object = weed
             end
         end
@@ -213,6 +212,7 @@ RegisterCommand('testforest', function(source, args, raw)
     TriggerEvent("chat:addMessage", {args={'Forest size', count}})
     local column = math.ceil(math.sqrt(count))
     TriggerEvent("chat:addMessage", {args={'Column', column}})
+    TriggerEvent("chat:addMessage", {args={'Draw Distance',Config.Distance.Draw}})
     local offset = (column * Config.Distance.Space)/2
     offset = vector3(-offset, -offset, 5)
     local cursor = origin + offset
@@ -224,7 +224,8 @@ RegisterCommand('testforest', function(source, args, raw)
         ]]
         local found, Z = GetGroundZFor_3dCoord(cursor.x, cursor.y, cursor.z, false)
         if found then
-            octree:insert(vector3(cursor.x, cursor.y, Z), 0.2, {stage=1})
+            local stage = math.random(1,#Growth)
+            octree:insert(vector3(cursor.x, cursor.y, Z), 0.2, {stage=stage})
         end
         cursor = cursor + vector3(0, Config.Distance.Space, 0)
         planted = planted + 1
