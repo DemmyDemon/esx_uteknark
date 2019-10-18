@@ -1,4 +1,5 @@
 Locales['sv'] = {
+    planting_text = 'Plantering',
     planting_ok = 'Planterad',
     planting_in_vehicle = 'Plantera från fordon? Seriöst?',
     planting_too_steep = 'Lite för brant där, va?',

@@ -1,4 +1,5 @@
 Locales['en'] = {
+    planting_text = 'Planting',
     planting_ok = 'Planted',
     planting_in_vehicle = 'Drive-by weed? Seriously?',
     planting_too_steep = 'Too steep, dude!',

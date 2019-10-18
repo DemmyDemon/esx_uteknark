@@ -19,6 +19,36 @@ function flatEnough(surfaceNormal)
     )
 end
 
+function makeToast(subject,message)
+    local dict = 'bkr_prop_weed'
+    local icon = 'prop_cannabis_leaf_dprop_cannabis_leaf_a'
+    if not HasStreamedTextureDictLoaded(dict) then
+        RequestStreamedTextureDict(dict)
+        while not HasStreamedTextureDictLoaded(dict) do
+            Citizen.Wait(0)
+        end
+    end
+
+    -- BeginTextCommandThefeedPost("STRING")
+    SetNotificationTextEntry("STRING")
+    AddTextComponentSubstringPlayerName(message)
+    --EndTextCommandThefeedPostMessagetext(
+    SetNotificationMessage(
+        dict, -- texture dict
+        icon, -- texture name
+        true, -- fade
+        1, -- icon type
+        'UteKnark', -- Sender
+        subject
+    )
+    --EndTextCommandThefeedPostTicker(
+    DrawNotification(
+        false, -- important
+        false -- has tokens
+    )
+    SetStreamedTextureDictAsNoLongerNeeded(icon)
+end
+
 function getPlantingLocation(visible)
     local ped = PlayerPedId()
 
@@ -220,6 +250,12 @@ function deleteActivePlants()
     end
     activePlants = {}
 end
+
+RegisterCommand('toast', function(source, args, raw)
+    if #args > 0 then
+        makeToast(_U('planting_text'), table.concat(args, " "))
+    end
+end,false)
 
 RegisterCommand('testforest', function(source, args, raw)
     local origin = GetEntityCoords(PlayerPedId())
