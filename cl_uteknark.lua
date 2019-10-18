@@ -1,5 +1,6 @@
 local table = table
 local plantingTargetOffset = vector3(0,2,-3)
+local plantingSpaceAbove = vector3(0,0,Config.Distance.Above)
 local rayFlagsLocation = 17
 local rayFlagsObstruction = 273
 local octree = pOctree(vector3(0,1500,0),vector3(12000,12000,2000)) -- Covers the whole damn map!
@@ -20,6 +21,11 @@ end
 
 function getPlantingLocation(visible)
     local ped = PlayerPedId()
+
+    if IsPedInAnyVehicle(ped) then
+        return false, 'planting_in_vehicle' -- The rest can all nil out
+    end
+
     local playerCoord = GetEntityCoords(ped)
     local target = GetOffsetFromEntityInWorldCoords(ped, plantingTargetOffset)
     local testRay = StartShapeTestRay(playerCoord, target, rayFlagsLocation, ped, 7) -- This 7 is entirely cargo cult. No idea what it does.
@@ -36,12 +42,41 @@ function getPlantingLocation(visible)
                 local plantDistance = #(playerCoord - hitLocation)
                 debug(plantDistance)
                 if plantDistance <= Config.Distance.Interact then
-                    if visible then
-                        DebugSphere(hitLocation, 0.1, 0, 255, 0, 100)
-                        DrawLine(playerCoord, hitLocation, 0, 255, 0, 100)
-                        debug('~g~planting OK')
+                    local hits = octree:searchSphere(hitLocation, Config.Distance.Space)
+                    if #hits > 0 then
+                        debug('Found another plant too close')
+                        if visible then
+                            for i, hit in ipairs(hits) do
+                                DrawLine(hitLocation, hit.bounds.location, 255, 0, 255, 100)
+                            end
+                            DebugSphere(hitLocation, 0.1, 255, 0, 255, 100)
+                            DrawLine(playerCoord, hitLocation, 255, 0, 255, 100)
+                        end
+                        return false, 'planting_too_close', hitLocation, surfaceNormal, material
+                    else
+                        if visible then
+                            DebugSphere(hitLocation, 0.1, 0, 255, 0, 100)
+                            DrawLine(playerCoord, hitLocation, 0, 255, 0, 100)
+                        end
+                        local aboveTarget = hitLocation + plantingSpaceAbove
+                        local aboveRay = StartShapeTestRay(hitLocation, aboveTarget, rayFlagsObstruction, ped, 7)
+                        local _,hitAbove,hitAbovePoint = GetShapeTestResult(aboveRay)
+                        if hitAbove == 1 then
+                            if visible then
+                                debug('Obstructed above')
+                                DrawLine(hitLocation, hitAbovePoint, 255, 0, 0, 100)
+                                DebugSphere(hitAbovePoint, 0.1, 255, 0, 0, 100)
+                            end
+                            return false, 'planting_obstructed', hitLocation, surfaceNormal, material
+                        else
+                            if visible then
+                                DrawLine(hitLocation, aboveTarget, 0, 255, 0, 100)
+                                DebugSphere(hitAbovePoint, 0.1, 255, 0, 0, 100)
+                                debug('~g~planting OK')
+                            end
+                            return true,'planting_ok', hitLocation, surfaceNormal, material
+                        end
                     end
-                    return true,'planting_ok', hitLocation, surfaceNormal, material
                 else
                     if visible then
                         DebugSphere(hitLocation, 0.1, 0, 128, 0, 100)
@@ -76,21 +111,19 @@ function getPlantingLocation(visible)
 
 end
 
+
 Citizen.CreateThread(function()
     while true do
         if debug.active then
-            --[[
             local plantable, message, where, normal, material = getPlantingLocation(true)
-            if not plantable and message then
-                debug(_U(message))
+            if message then
+                debug('Planting message:',_U(message))
             end
-            ]]
             debug:flush()
         end
         Citizen.Wait(0)
     end
 end)
-
 
 function DrawIndicator(location, r, g, b, a)
     local range = Config.Distance.Interact * 0.5
@@ -130,12 +163,14 @@ Citizen.CreateThread(function()
                     closestPlant = plant
                 end
             end
-            debug('Closest plant at',closestDistance,'meters')
-            if closestDistance <= Config.Distance.Interact then
-                local stage = Growth[closestPlant.stage]
-                debug('Closest pant is stage', closestPlant.stage)
-                DrawIndicator(closestPlant.at + stage.marker.offset, 0, 255, 0, 128)
-                debug('Within intraction distance!')
+            if closestDistance then
+                debug('Closest plant at',closestDistance,'meters')
+                if closestDistance <= Config.Distance.Interact then
+                    local stage = Growth[closestPlant.stage]
+                    debug('Closest pant is stage', closestPlant.stage)
+                    DrawIndicator(closestPlant.at + stage.marker.offset, 0, 255, 0, 128)
+                    debug('Within intraction distance!')
+                end
             end
             Citizen.Wait(0)
         else
@@ -186,23 +221,6 @@ function deleteActivePlants()
     activePlants = {}
 end
 
-local testWeedModel = `prop_weed_02`
-function testWeed(location)
-    if not HasModelLoaded(testWeedModel) then
-        RequestModel(testWeedModel)
-        while not HasModelLoaded(testWeedModel) do
-            Citizen.Wait(0)
-        end
-    end
-    local found, Z = GetGroundZFor_3dCoord(location.x, location.y, location.z, false)
-    if found then
-        local weed = CreateObject(testWeedModel, location.x, location.y, Z, false, false, false)
-        FreezeEntityPosition(weed, true)
-        SetEntityCollision(weed, false, true)
-        return weed
-    end
-end
-
 RegisterCommand('testforest', function(source, args, raw)
     local origin = GetEntityCoords(PlayerPedId())
     local count = 25
@@ -218,14 +236,10 @@ RegisterCommand('testforest', function(source, args, raw)
     local cursor = origin + offset
     local planted = 0
     while planted < count do
-        --[[
-        local weed = testWeed(cursor)
-        table.insert(activePlants,{object=weed,at=cursor})
-        ]]
         local found, Z = GetGroundZFor_3dCoord(cursor.x, cursor.y, cursor.z, false)
         if found then
             local stage = math.random(1,#Growth)
-            octree:insert(vector3(cursor.x, cursor.y, Z), 0.2, {stage=stage})
+            octree:insert(vector3(cursor.x, cursor.y, Z), 0.01, {stage=stage})
         end
         cursor = cursor + vector3(0, Config.Distance.Space, 0)
         planted = planted + 1

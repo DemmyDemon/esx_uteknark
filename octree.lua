@@ -2,7 +2,7 @@ local table = table
 local vector3 = vector3
 local AXIS = {'x','y','z'}
 local MAX_OBJECTS = 5
-local MAX_LEVELS = 10
+local MAX_LEVELS = 50
 
 local function intersects(box,item)
     local intersect = {x=false,y=false,z=false}
