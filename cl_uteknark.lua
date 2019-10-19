@@ -6,6 +6,30 @@ local rayFlagsObstruction = 273
 local octree = pOctree(vector3(0,1500,0),vector3(12000,12000,2000)) -- Covers the whole damn map!
 local activePlants = {}
 
+local registerStrings = {
+    'status_active',
+    'status_passive',
+}
+
+for i,entry in ipairs(registerStrings) do
+    AddTextEntry('uteknark_'..entry, _U(entry))
+end
+
+function interactHelp(stage,action)
+    BeginTextCommandDisplayHelp('uteknark_status_active')
+    AddTextComponentInteger(stage)
+    AddTextComponentInteger(#Growth)
+    AddTextComponentSubstringPlayerName(action)
+    EndTextCommandDisplayHelp(0, false, false, 1)
+end
+function passiveHelp(stage,status)
+    BeginTextCommandDisplayHelp('uteknark_status_passive')
+    AddTextComponentInteger(stage)
+    AddTextComponentInteger(#Growth)
+    AddTextComponentSubstringPlayerName(status)
+    EndTextCommandDisplayHelp(0, false, false, 1)
+end
+
 function flatEnough(surfaceNormal)
     local x = math.abs(surfaceNormal.x)
     local y = math.abs(surfaceNormal.y)
@@ -155,7 +179,7 @@ Citizen.CreateThread(function()
     end
 end)
 
-function DrawIndicator(location, r, g, b, a)
+function DrawIndicator(location, color)
     local range = Config.Distance.Interact * 0.5
     DrawMarker(
         23, -- type (23 is a fat horizontal ring)
@@ -163,7 +187,7 @@ function DrawIndicator(location, r, g, b, a)
         0.0, 0.0, 0.0, -- direction (?)
         0.0, 0.0, 0.0, -- rotation
         range, range, range, -- scale
-        r, g, b, a, -- color
+        color[1], color[2], color[3], color[4],
         false, -- bob
         false, -- face camera
         2, -- dunno, lol, 100% cargo cult
@@ -178,8 +202,9 @@ Citizen.CreateThread(function()
     drawDistance = drawDistance * 1.01 -- So they don't fight about it, culling is at a slightly longer range
     while true do
         if #activePlants > 0 then
+            local playerPed = PlayerPedId()
             debug(#activePlants,'active plants')
-            local myLocation = GetEntityCoords(PlayerPedId())
+            local myLocation = GetEntityCoords(playerPed)
             local closestDistance
             local closestPlant
             for i,plant in ipairs(activePlants) do
@@ -198,8 +223,16 @@ Citizen.CreateThread(function()
                 if closestDistance <= Config.Distance.Interact then
                     local stage = Growth[closestPlant.stage]
                     debug('Closest pant is stage', closestPlant.stage)
-                    DrawIndicator(closestPlant.at + stage.marker.offset, 0, 255, 0, 128)
+                    DrawIndicator(closestPlant.at + stage.marker.offset, stage.marker.color)
                     debug('Within intraction distance!')
+                    if not IsPedInAnyVehicle(playerPed) then
+                        DisableControlAction(0, 44, true) -- Disable INPUT_COVER, as it's used to destroy plants
+                        if stage.interact then
+                            interactHelp(closestPlant.stage, _U(stage.label))
+                        else
+                            passiveHelp(closestPlant.stage, _U(stage.label))
+                        end
+                    end
                 end
             end
             Citizen.Wait(0)
@@ -274,7 +307,7 @@ RegisterCommand('testforest', function(source, args, raw)
     while planted < count do
         local found, Z = GetGroundZFor_3dCoord(cursor.x, cursor.y, cursor.z, false)
         if found then
-            local stage = math.random(1,#Growth)
+            local stage = (planted % #Growth) + 1
             octree:insert(vector3(cursor.x, cursor.y, Z), 0.01, {stage=stage})
         end
         cursor = cursor + vector3(0, Config.Distance.Space, 0)

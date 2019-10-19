@@ -19,77 +19,88 @@ and 1 weed_seed
 
 --]]
 
+local Colors = {
+    Growing = {0, 255, 128, 128},
+    Tend = {0, 128, 255, 128},
+    Harvest = {255, 128, 0, 128},
+}
+
 Growth = {
     { -- 1
         label = 'growth_seedling',
         model = `prop_weed_01`,
-        mode = 'growth',
         time = 1, -- One minute
         marker = {
-            offset = vector3(0,0,0.2)
+            offset = vector3(0,0,0.2),
+            color = Colors.Growing,
         },
     },
     { -- 2
         label = 'growth_tend',
         model = `prop_weed_01`,
-        mode = 'tend',
+        interact = true,
         time = 20, -- Twenty minutes
         marker = {
-            offset = vector3(0,0,0.3)
+            offset = vector3(0,0,0.3),
+            color = Colors.Tend,
         },
     },
     { -- 3
         label = 'growth_growing',
         model = `prop_weed_01`,
-        mode = 'grow',
         time = 480, -- 480 minutes is 12 hours
         marker = {
-            offset = vector3(0,0,0.5)
+            offset = vector3(0,0,0.5),
+            color = Colors.Growing,
         },
     },
     { -- 4
         label = 'growth_tend',
         model = `prop_weed_01`,
-        mode = 'tend',
+        interact = true,
         time = 480,
         marker = {
-            offset = vector3(0,0,0.75)
+            offset = vector3(0,0,0.75),
+            color = Colors.Tend,
         },
     },
     { -- 5
         label = 'growth_growing',
         model = `prop_weed_01`,
-        mode = 'grow',
         time = 480,
         marker = {
-            offset = vector3(0,0,0.90)
+            offset = vector3(0,0,0.90),
+            color = Colors.Growing,
         },
     },
     { -- 6
         label = 'growth_tend',
         model = `prop_weed_01`,
-        mode = 'tend',
+        interact = true,
         time = 480,
         marker = {
-            offset = vector3(0,0,1)
+            offset = vector3(0,0,1),
+            color = Colors.Tend,
         },
     },
     { -- 7
         label = 'growth_growing',
         model = `prop_weed_01`,
-        mode = 'grow',
         time = 480,
         marker = {
-            offset = vector3(0,0,1.2)
+            offset = vector3(0,0,1.2),
+            color = Colors.Growing,
         },
     },
     { -- 8
         label = 'growth_yield',
         model = `prop_weed_01`,
-        mode = 'yield',
+        interact = true,
+        yield = true,
         time = 960,  -- 960 minutes is 24 hours
         marker = {
-            offset = vector3(0,0,1.5)
+            offset = vector3(0,0,1.5),
+            color = Colors.Harvest,
         },
     },
 }
