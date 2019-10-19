@@ -61,7 +61,7 @@ function makeToast(subject,message)
         dict, -- texture dict
         icon, -- texture name
         true, -- fade
-        1, -- icon type
+        0, -- icon type
         'UteKnark', -- Sender
         subject
     )
