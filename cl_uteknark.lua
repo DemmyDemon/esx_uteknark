@@ -30,19 +30,6 @@ function passiveHelp(stage,status)
     EndTextCommandDisplayHelp(0, false, false, 1)
 end
 
-function flatEnough(surfaceNormal)
-    local x = math.abs(surfaceNormal.x)
-    local y = math.abs(surfaceNormal.y)
-    local z = math.abs(surfaceNormal.z)
-    return (
-        x <= Config.MaxGroundAngle
-        and
-        y <= Config.MaxGroundAngle
-        and
-        z >= 1.0 - Config.MaxGroundAngle
-    )
-end
-
 function makeToast(subject,message)
     local dict = 'bkr_prop_weed'
     local icon = 'prop_cannabis_leaf_dprop_cannabis_leaf_a'
@@ -73,7 +60,22 @@ function makeToast(subject,message)
     SetStreamedTextureDictAsNoLongerNeeded(icon)
 end
 
+function flatEnough(surfaceNormal)
+    local x = math.abs(surfaceNormal.x)
+    local y = math.abs(surfaceNormal.y)
+    local z = math.abs(surfaceNormal.z)
+    return (
+        x <= Config.MaxGroundAngle
+        and
+        y <= Config.MaxGroundAngle
+        and
+        z >= 1.0 - Config.MaxGroundAngle
+    )
+end
+
 function getPlantingLocation(visible)
+
+    -- TODO: Refactor this *monster*, plx!
     local ped = PlayerPedId()
 
     if IsPedInAnyVehicle(ped) then
@@ -164,20 +166,6 @@ function getPlantingLocation(visible)
     end
 
 end
-
-
-Citizen.CreateThread(function()
-    while true do
-        if debug.active then
-            local plantable, message, where, normal, material = getPlantingLocation(true)
-            if message then
-                debug('Planting message:',_U(message))
-            end
-            debug:flush()
-        end
-        Citizen.Wait(0)
-    end
-end)
 
 function DrawIndicator(location, color)
     local range = Config.Distance.Interact * 0.5
@@ -270,10 +258,6 @@ Citizen.CreateThread(function()
     end
 end)
 
-RegisterCommand('groundmat',function(source, args, raw)
-    local plantable, message, where, normal, material = getPlantingLocation(true)
-    TriggerEvent("chat:addMessage", {args={'Material', material}})
-end, false)
 
 function deleteActivePlants()
     for i,plant in ipairs(activePlants) do
@@ -283,6 +267,33 @@ function deleteActivePlants()
     end
     activePlants = {}
 end
+
+
+AddEventHandler('onResourceStop', function(resourceName)
+    if resourceName == GetCurrentResourceName() then
+        deleteActivePlants()
+    end
+end)
+
+-- TODO:  Below are debug/dev functions and shuld be disabled for release!
+
+Citizen.CreateThread(function()
+    while true do
+        if debug.active then
+            local plantable, message, where, normal, material = getPlantingLocation(true)
+            if message then
+                debug('Planting message:',_U(message))
+            end
+            debug:flush()
+        end
+        Citizen.Wait(0)
+    end
+end)
+
+RegisterCommand('groundmat',function(source, args, raw)
+    local plantable, message, where, normal, material = getPlantingLocation(true)
+    TriggerEvent("chat:addMessage", {args={'Material', material}})
+end, false)
 
 RegisterCommand('toast', function(source, args, raw)
     if #args > 0 then
@@ -319,9 +330,3 @@ RegisterCommand('testforest', function(source, args, raw)
 
     end
 end, false)
-
-AddEventHandler('onResourceStop', function(resourceName)
-    if resourceName == GetCurrentResourceName() then
-        deleteActivePlants()
-    end
-end)
