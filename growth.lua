@@ -21,8 +21,8 @@ and 1 weed_seed
 
 local Colors = {
     Growing = {0, 255, 128, 128},
-    Tend = {0, 128, 255, 128},
-    Harvest = {255, 128, 0, 128},
+    Tend = {255, 255, 128, 128},
+    Harvest = {255, 128, 128, 128},
 }
 
 Growth = {
@@ -31,7 +31,7 @@ Growth = {
         model = `prop_weed_01`,
         time = 1, -- One minute
         marker = {
-            offset = vector3(0,0,0.2),
+            offset = vector3(0,0,0.05),
             color = Colors.Growing,
         },
     },
@@ -50,7 +50,7 @@ Growth = {
         model = `prop_weed_01`,
         time = 480, -- 480 minutes is 12 hours
         marker = {
-            offset = vector3(0,0,0.5),
+            offset = vector3(0,0,0.55),
             color = Colors.Growing,
         },
     },
@@ -60,7 +60,7 @@ Growth = {
         interact = true,
         time = 480,
         marker = {
-            offset = vector3(0,0,0.75),
+            offset = vector3(0,0,0.8),
             color = Colors.Tend,
         },
     },
@@ -69,7 +69,7 @@ Growth = {
         model = `prop_weed_01`,
         time = 480,
         marker = {
-            offset = vector3(0,0,0.90),
+            offset = vector3(0,0,1.05),
             color = Colors.Growing,
         },
     },
@@ -79,7 +79,7 @@ Growth = {
         interact = true,
         time = 480,
         marker = {
-            offset = vector3(0,0,1),
+            offset = vector3(0,0,1.3),
             color = Colors.Tend,
         },
     },
@@ -88,7 +88,7 @@ Growth = {
         model = `prop_weed_01`,
         time = 480,
         marker = {
-            offset = vector3(0,0,1.2),
+            offset = vector3(0,0,1.55),
             color = Colors.Growing,
         },
     },
@@ -99,7 +99,7 @@ Growth = {
         yield = true,
         time = 960,  -- 960 minutes is 24 hours
         marker = {
-            offset = vector3(0,0,1.5),
+            offset = vector3(0,0,1.8),
             color = Colors.Harvest,
         },
     },

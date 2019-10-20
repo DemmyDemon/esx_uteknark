@@ -168,12 +168,12 @@ function getPlantingLocation(visible)
 end
 
 function DrawIndicator(location, color)
-    local range = Config.Distance.Interact * 0.5
+    local range = 1.0
     DrawMarker(
-        23, -- type (23 is a fat horizontal ring)
-        location + vector3(0,0,0.2),
+        6, -- type (6 is a vertical and 3D ring)
+        location,
         0.0, 0.0, 0.0, -- direction (?)
-        0.0, 0.0, 0.0, -- rotation
+        -90.0, 0.0, 0.0, -- rotation (90 degrees because the right is really vertical)
         range, range, range, -- scale
         color[1], color[2], color[3], color[4],
         false, -- bob
@@ -239,6 +239,17 @@ Citizen.CreateThread(function()
             if not entry.data.object then
                 local stage = entry.data.stage or 1
                 local model = Growth[stage].model
+                if not model or not IsModelValid(model) then
+                    Citizen.Trace(tostring(model).." is not a valid model!\n")
+                    model = `prop_mp_cone_01`
+                end
+                if not HasModelLoaded(model) then
+                    RequestModel(model)
+                    local begin = GetGameTimer()
+                    while not HasModelLoaded(model) and GetGameTimer() < begin + 2500 do
+                        Citizen.Wait(0)
+                    end
+                end
                 local weed = CreateObject(model, entry.bounds.location, false, false, false)
                 local heading = math.random(0,359) * 1.0
                 SetEntityHeading(weed, heading)
@@ -247,6 +258,7 @@ Citizen.CreateThread(function()
                 SetEntityLodDist(weed, math.floor(drawDistance))
                 table.insert(activePlants, {node=entry, object=weed, at=entry.bounds.location, stage=stage})
                 entry.data.object = weed
+                --SetModelAsNoLongerNeeded(model)
             end
         end
         if #hits > 0 then
@@ -303,7 +315,7 @@ end,false)
 
 RegisterCommand('testforest', function(source, args, raw)
     local origin = GetEntityCoords(PlayerPedId())
-    local count = 25
+    local count = #Growth * #Growth
     if args[1] and string.match(args[1],'^[0-9]+$') then
         count = tonumber(args[1])
     end
