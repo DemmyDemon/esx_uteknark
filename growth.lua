@@ -28,7 +28,8 @@ local Colors = {
 Growth = {
     { -- 1
         label = 'growth_seedling',
-        model = `prop_weed_01`,
+        model = `prop_weed_02`,
+        offset = vector3(0,0,-1),
         time = 1, -- One minute
         marker = {
             offset = vector3(0,0,0.05),
@@ -37,7 +38,8 @@ Growth = {
     },
     { -- 2
         label = 'growth_tend',
-        model = `prop_weed_01`,
+        model = `prop_weed_02`,
+        offset = vector3(0,0,-0.8),
         interact = true,
         time = 20, -- Twenty minutes
         marker = {
@@ -47,7 +49,8 @@ Growth = {
     },
     { -- 3
         label = 'growth_growing',
-        model = `prop_weed_01`,
+        model = `prop_weed_02`,
+        offset = vector3(0,0,-0.6),
         time = 480, -- 480 minutes is 12 hours
         marker = {
             offset = vector3(0,0,0.55),
@@ -56,7 +59,8 @@ Growth = {
     },
     { -- 4
         label = 'growth_tend',
-        model = `prop_weed_01`,
+        model = `prop_weed_02`,
+        offset = vector3(0,0,-0.4),
         interact = true,
         time = 480,
         marker = {
@@ -67,6 +71,7 @@ Growth = {
     { -- 5
         label = 'growth_growing',
         model = `prop_weed_01`,
+        offset = vector3(0,0,-0.6),
         time = 480,
         marker = {
             offset = vector3(0,0,1.05),
@@ -74,27 +79,9 @@ Growth = {
         },
     },
     { -- 6
-        label = 'growth_tend',
-        model = `prop_weed_01`,
-        interact = true,
-        time = 480,
-        marker = {
-            offset = vector3(0,0,1.3),
-            color = Colors.Tend,
-        },
-    },
-    { -- 7
-        label = 'growth_growing',
-        model = `prop_weed_01`,
-        time = 480,
-        marker = {
-            offset = vector3(0,0,1.55),
-            color = Colors.Growing,
-        },
-    },
-    { -- 8
         label = 'growth_yield',
         model = `prop_weed_01`,
+        offset = vector3(0,0,0),
         interact = true,
         yield = true,
         time = 960,  -- 960 minutes is 24 hours

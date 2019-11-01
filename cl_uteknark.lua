@@ -60,6 +60,16 @@ function makeToast(subject,message)
     SetStreamedTextureDictAsNoLongerNeeded(icon)
 end
 
+function serverlog(...)
+    TriggerServerEvent('esx_uteknark:log',...)
+end
+
+RegisterNetEvent('esx_uteknark:make_toast')
+AddEventHandler ('esx_uteknark:make_toast', function(subject,message)
+    makeToast(subject, message)
+end)
+
+
 function flatEnough(surfaceNormal)
     local x = math.abs(surfaceNormal.x)
     local y = math.abs(surfaceNormal.y)
@@ -167,6 +177,17 @@ function getPlantingLocation(visible)
 
 end
 
+RegisterNetEvent('esx_uteknark:attempt_plant')
+AddEventHandler ('esx_uteknark:attempt_plant', function()
+    -- false, 'planting_too_close', hitLocation, surfaceNormal, material
+    local plantable, message, location, _, soil = getPlantingLocation()
+    if plantable then
+        TriggerServerEvent('esx_uteknark:success_plant', location, soil)
+    else
+        makeToast(_U('planting_text'), _U(message))
+    end
+end)
+
 function DrawIndicator(location, color)
     local range = 1.0
     DrawMarker(
@@ -250,7 +271,8 @@ Citizen.CreateThread(function()
                         Citizen.Wait(0)
                     end
                 end
-                local weed = CreateObject(model, entry.bounds.location, false, false, false)
+                local offset = Growth[stage].offset or vector3(0,0,0)
+                local weed = CreateObject(model, entry.bounds.location + offset, false, false, false)
                 local heading = math.random(0,359) * 1.0
                 SetEntityHeading(weed, heading)
                 FreezeEntityPosition(weed, true)
@@ -287,20 +309,41 @@ AddEventHandler('onResourceStop', function(resourceName)
     end
 end)
 
--- TODO:  Below are debug/dev functions and shuld be disabled for release!
-
-Citizen.CreateThread(function()
-    while true do
-        if debug.active then
-            local plantable, message, where, normal, material = getPlantingLocation(true)
-            if message then
-                debug('Planting message:',_U(message))
-            end
-            debug:flush()
-        end
-        Citizen.Wait(0)
+RegisterNetEvent('esx_uteknark:toggle_debug')
+AddEventHandler ('esx_uteknark:toggle_debug', function()
+    if not debug.active then
+        serverlog('enabled debugging')
+        debug.active = true
+    else
+        serverlog('disabled debugging')
+        debug.active = false
     end
 end)
+
+Citizen.CreateThread(function()
+    local ready = false
+    while true do
+        if ready then
+            if debug.active then
+                local plantable, message, where, normal, material = getPlantingLocation(true)
+                if message then
+                    debug('Planting message:',_U(message))
+                end
+                debug:flush()
+            end
+            Citizen.Wait(0)
+        else
+            if NetworkIsSessionStarted() then
+                ready = true
+                TriggerServerEvent('esx_uteknark:ready')
+            else
+                Citizen.Wait(100)
+            end
+        end
+    end
+end)
+
+-- TODO:  Below are debug/dev functions and shuld be disabled for release!
 
 RegisterCommand('groundmat',function(source, args, raw)
     local plantable, message, where, normal, material = getPlantingLocation(true)
