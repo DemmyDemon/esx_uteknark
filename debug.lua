@@ -26,6 +26,9 @@ local debugMethods = {
             line = line .. element
         end
         table.insert(instance.buffer,line)
+        while #instance.buffer > 25 do
+            table.remove(instance.buffer, 1)
+        end
     end,
     flush = function(instance)
         if instance.active then
