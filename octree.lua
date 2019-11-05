@@ -354,7 +354,7 @@ local nodeMethods = {
                         if slowMode then
                             Citizen.Wait(0)
                         end
-                        node:searchSphereAsync(location,radius, callback)
+                        node:searchSphereAsync(location, radius, callback, slowMode)
                     end
                 end
             end
