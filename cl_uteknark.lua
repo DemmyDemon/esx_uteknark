@@ -255,8 +255,7 @@ Citizen.CreateThread(function()
     local drawDistance = Config.Distance.Draw
     while true do
         local here = GetEntityCoords(PlayerPedId())
-        local hits = octree:searchSphere(here, drawDistance)
-        for i,entry in ipairs(hits) do
+        octree:searchSphereAsync(here, drawDistance, function(entry)
             if not entry.data.object then
                 local stage = entry.data.stage or 1
                 local model = Growth[stage].model
@@ -282,13 +281,8 @@ Citizen.CreateThread(function()
                 entry.data.object = weed
                 --SetModelAsNoLongerNeeded(model)
             end
-        end
-        if #hits > 0 then
-            debug(#hits,'octree hits')
-            Citizen.Wait(0)
-        else
-            Citizen.Wait(500)
-        end
+        end, true)
+        Citizen.Wait(1500)
     end
 end)
 
@@ -362,6 +356,12 @@ RegisterCommand('testforest', function(source, args, raw)
     if args[1] and string.match(args[1],'^[0-9]+$') then
         count = tonumber(args[1])
     end
+
+    local randomStage = false
+    if args[2] then
+        randomStage = true
+    end
+
     TriggerEvent("chat:addMessage", {args={'Forest size', count}})
     local column = math.ceil(math.sqrt(count))
     TriggerEvent("chat:addMessage", {args={'Column', column}})
@@ -374,6 +374,9 @@ RegisterCommand('testforest', function(source, args, raw)
         local found, Z = GetGroundZFor_3dCoord(cursor.x, cursor.y, cursor.z, false)
         if found then
             local stage = (planted % #Growth) + 1
+            if randomStage then
+                stage = math.random(#Growth)
+            end
             octree:insert(vector3(cursor.x, cursor.y, Z), 0.01, {stage=stage})
         end
         cursor = cursor + vector3(0, Config.Distance.Space, 0)
