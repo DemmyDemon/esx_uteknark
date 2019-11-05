@@ -20,4 +20,9 @@ Locales['en'] = {
 
     command_invalid = 'Invalid directive: %s',
     command_empty = 'Yes?',
+
+    interact_text = 'Plant interaction',
+    interact_tended = 'Plant tended',
+    interact_destroyed = 'Plant destroyed',
+    interact_harvested = 'Plant harvested',
 }

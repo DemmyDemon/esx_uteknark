@@ -2,6 +2,7 @@ local ESX = nil
 local ESXTries = 60
 local oneSyncEnabled = GetConvar('onesync_enabled', false)
 local octree = pOctree(vector3(0,1500,0),vector3(12000,12000,2000)) -- Covers the whole damn map!
+local VERBOSE = true
 
 function log (...)
     local numElements = select('#',...)
@@ -16,6 +17,12 @@ function log (...)
         line = line..' '..tostring(entry)
     end
     Citizen.Trace(prefix..resourceName..line..suffix)
+end
+
+function verbose(...)
+    if VERBOSE then
+        log(...)
+    end
 end
 
 if not oneSyncEnabled then
@@ -104,14 +111,21 @@ function inChat(target, message)
 end
 
 function plantSeed(location, soil)
-    log('plantSeed called -- NOT IMPLEMENTED')
-    return false
+    
+    local hits = cropstate.octree:searchSphere(location, Config.Distance.Space)
+    if #hits > 0 then
+        return false
+    end
+
+    verbose('Planting at',location,'in soil', soil)
+    cropstate:plant(location, soil)
+    return true
 end
 
 RegisterNetEvent('esx_uteknark:success_plant')
 AddEventHandler ('esx_uteknark:success_plant', function(location, soil)
     local src = source
-    if oneSyncEnabled then
+    if oneSyncEnabled and false then -- "and false" because something is weird in my OneSync stuff
         local ped = GetPlayerPed(src)
         --log('ped:',ped)
         local pedLocation = GetEntityCoords(ped)
@@ -173,12 +187,82 @@ Citizen.CreateThread(function()
     end
 end)
 
+Citizen.CreateThread(function()
+    local databaseReady = false
+    while not databaseReady do
+        Citizen.Wait(500)
+        local state = GetResourceState('mysql-async')
+        if state == "started" then
+            Citizen.Wait(500)
+            cropstate:load(function(plantCount)
+                if plantCount == 1 then
+                    log('Uteknark loaded a single plant!')
+                else
+                    log('Uteknark loaded',plantCount,'plants')
+                end
+            end)
+            databaseReady = true
+        end
+    end
+
+    while true do
+        Citizen.Wait(0)
+        local now = os.time()
+        local plantsHandled = 0
+        for id, plant in pairs(cropstate.index) do
+            if type(id) == 'number' then -- Because of the whole "hashtable = true" thing
+                
+                local stageData = Growth[plant.data.stage]
+                local growthTime = (stageData.time * 60 * Config.TimeMultiplier)
+                -- TODO: Implement soil quality!
+                local soilQuality = Config.Soil[plant.data.soil] or 1.0
+
+                if stageData.interact then
+                    local relevantTime = plant.data.time + ((growthTime / soilQuality) * Config.TimeMultiplier)
+                    if now >= relevantTime then
+                        verbose('Plant',id,'has died: No interaction in time')
+                        cropstate:remove(id)
+                    end
+                else
+                    local relevantTime = plant.data.time + ((growthTime * soilQuality) * Config.TimeMultiplier)
+                    if now >= relevantTime then
+                        if plant.data.stage < #Growth then
+                            verbose('Plant',id,'has grown to stage',plant.data.stage + 1)
+                            cropstate:update(id, plant.data.stage + 1)
+                        else
+                            verbose('Plant',id,'has died: Ran out of stages')
+                            cropstate:remove(id)
+                        end
+                    end
+                end
+
+                plantsHandled = plantsHandled + 1
+                if plantsHandled % 10 == 0 then
+                    Citizen.Wait(0)
+                end
+            end
+        end
+        -- verbose('Uteknark growth tick took',os.time() - now,'seconds for',plantsHandled,'plants')
+    end
+end)
+
 local commands = {
     debug = function(source, args)
         if source == 0 then
             log('Client debugging on the console? Nope.')
         else
             TriggerClientEvent('esx_uteknark:toggle_debug', source)
+        end
+    end,
+    stage = function(source, args)
+        if args[1] and string.match(args[1], "^%d+$") then
+            local plant = tonumber(args[1])
+            if args[2] and string.match(args[2], "^%d+$") then
+                local stage = tonumber(args[2])
+                if (stage <= #Growth) then
+                    cropstate:update(plant, stage)
+                end
+            end
         end
     end,
 }

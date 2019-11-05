@@ -6,11 +6,18 @@ Config = {
         Space = 1.2,    -- How far apart do the plants need to be planted?
         Above = 5.0,    -- How much clear space above the planting space do you need to plant?
     },
+    ActionTime = 10000,   -- How many milliseconds does an action take (planting, destroying, harvesting, tending)
+    ScenarioTime = 3000,  -- How long should the scenario/animations run?
     MaxGroundAngle = 0.6, -- How tilted can the ground be and still hold plants?
     Items = { -- What items are used?
         Seed = 'weed_seed',     -- Used to plant the weed
         Tend = nil,             -- Optional item to progress growth cycle
         Product = 'weed_pooch', -- What item is given when you harvest?
+    },
+    Scenario = {
+        Plant = 'WORLD_HUMAN_GARDENER_PLANT',
+        Frob = 'PROP_HUMAN_BUM_BIN',
+        Destroy = 'WORLD_HUMAN_STAND_FIRE',
     },
     Yield = {5,10}, -- How many Items.Product does each plant yield? {5,10} means "from 5 to 10, inclusive"
     YieldSeed = {0,1}, -- Same as Yield, except for the amount of seeds you get back

@@ -9,6 +9,7 @@ shared_scripts {
     'config.lua',
     'octree.lua',
     'growth.lua',
+    'cropstate.lua',
 }
 client_scripts {
     'debug.lua',

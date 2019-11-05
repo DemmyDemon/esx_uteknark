@@ -3,7 +3,6 @@ local plantingTargetOffset = vector3(0,2,-3)
 local plantingSpaceAbove = vector3(0,0,Config.Distance.Above)
 local rayFlagsLocation = 17
 local rayFlagsObstruction = 273
-local octree = pOctree(vector3(0,1500,0),vector3(12000,12000,2000)) -- Covers the whole damn map!
 local activePlants = {}
 
 local registerStrings = {
@@ -108,7 +107,7 @@ function getPlantingLocation(visible)
                 local plantDistance = #(playerCoord - hitLocation)
                 debug(plantDistance)
                 if plantDistance <= Config.Distance.Interact then
-                    local hits = octree:searchSphere(hitLocation, Config.Distance.Space)
+                    local hits = cropstate.octree:searchSphere(hitLocation, Config.Distance.Space)
                     if #hits > 0 then
                         debug('Found another plant too close')
                         if visible then
@@ -177,12 +176,29 @@ function getPlantingLocation(visible)
 
 end
 
+local inScenario = false
+local WEAPON_UNARMED = `WEAPON_UNARMED`
+local lastAction = 0
+function RunScenario(name, facing)
+    -- Citizen.Trace("Attempting to run scenario "..name.."\n")
+    local playerPed = PlayerPedId()
+    ClearPedTasks(playerPed)
+    SetCurrentPedWeapon(playerPed, WEAPON_UNARMED)
+    if facing then
+        -- TODO turn to face those coordinates
+    end
+    TaskStartScenarioInPlace(playerPed, name, 0, true)
+    inScenario = true
+end
+
 RegisterNetEvent('esx_uteknark:attempt_plant')
 AddEventHandler ('esx_uteknark:attempt_plant', function()
     -- false, 'planting_too_close', hitLocation, surfaceNormal, material
     local plantable, message, location, _, soil = getPlantingLocation()
     if plantable then
         TriggerServerEvent('esx_uteknark:success_plant', location, soil)
+        RunScenario(Config.Scenario.Plant)
+        lastAction = GetGameTimer()
     else
         makeToast(_U('planting_text'), _U(message))
     end
@@ -210,36 +226,69 @@ Citizen.CreateThread(function()
     local drawDistance = Config.Distance.Draw
     drawDistance = drawDistance * 1.01 -- So they don't fight about it, culling is at a slightly longer range
     while true do
+        local now = GetGameTimer()
+        local playerPed = PlayerPedId()
+        
+        if inScenario then
+            debug('In scenario', inScenario)
+            if now >= lastAction + Config.ScenarioTime then
+                Citizen.Trace('Clearing scenario\n')
+                ClearPedTasks(playerPed)
+                inScenario = false
+            end
+        end
+        
         if #activePlants > 0 then
-            local playerPed = PlayerPedId()
             debug(#activePlants,'active plants')
             local myLocation = GetEntityCoords(playerPed)
             local closestDistance
             local closestPlant
+            local closestIndex
             for i,plant in ipairs(activePlants) do
                 local distance = #(plant.at - myLocation)
-                if distance > drawDistance then
+                if not DoesEntityExist(plant.object) then
+                    table.remove(activePlants, i)
+                elseif distance > drawDistance then
                     DeleteObject(plant.object)
                     plant.node.data.object = nil
                     table.remove(activePlants, i)
                 elseif not closestDistance or distance < closestDistance then
                     closestDistance = distance
                     closestPlant = plant
+                    closestIndex = i
                 end
             end
             if closestDistance then
                 debug('Closest plant at',closestDistance,'meters')
                 if closestDistance <= Config.Distance.Interact then
                     local stage = Growth[closestPlant.stage]
+                    debug('Closest plant has ID',closestPlant.id)
                     debug('Closest pant is stage', closestPlant.stage)
                     DrawIndicator(closestPlant.at + stage.marker.offset, stage.marker.color)
                     debug('Within intraction distance!')
                     if not IsPedInAnyVehicle(playerPed) then
                         DisableControlAction(0, 44, true) -- Disable INPUT_COVER, as it's used to destroy plants
-                        if stage.interact then
-                            interactHelp(closestPlant.stage, _U(stage.label))
-                        else
-                            passiveHelp(closestPlant.stage, _U(stage.label))
+                        if now >= lastAction + Config.ActionTime then
+                            if IsDisabledControlJustPressed(0, 44) then
+                                lastAction = now
+                                table.remove(activePlants, closestIndex)
+                                DeleteObject(closestPlant.object)
+                                TriggerServerEvent('esx_uteknark:remove', closestPlant.id, myLocation)
+                                RunScenario(Config.Scenario.Destroy, closestPlant.at)
+                                -- FIXME: This causes people to run away!
+                                -- AddExplosion(closestPlant.at,24,0.5,true,false,0.0,true)
+                            else
+                                if stage.interact then
+                                    interactHelp(closestPlant.stage, _U(stage.label))
+                                    if IsControlJustPressed(0, 38) then
+                                        lastAction = now
+                                        TriggerServerEvent('esx_uteknark:frob', closestPlant.id, myLocation)
+                                        RunScenario(Config.Scenario.Frob, closestPlant.at)
+                                    end
+                                else
+                                    passiveHelp(closestPlant.stage, _U(stage.label))
+                                end
+                            end
                         end
                     end
                 end
@@ -255,8 +304,8 @@ Citizen.CreateThread(function()
     local drawDistance = Config.Distance.Draw
     while true do
         local here = GetEntityCoords(PlayerPedId())
-        octree:searchSphereAsync(here, drawDistance, function(entry)
-            if not entry.data.object then
+        cropstate.octree:searchSphereAsync(here, drawDistance, function(entry)
+            if not entry.data.object and not entry.data.deleted then
                 local stage = entry.data.stage or 1
                 local model = Growth[stage].model
                 if not model or not IsModelValid(model) then
@@ -277,7 +326,7 @@ Citizen.CreateThread(function()
                 FreezeEntityPosition(weed, true)
                 SetEntityCollision(weed, false, true)
                 SetEntityLodDist(weed, math.floor(drawDistance))
-                table.insert(activePlants, {node=entry, object=weed, at=entry.bounds.location, stage=stage})
+                table.insert(activePlants, {node=entry, object=weed, at=entry.bounds.location, stage=stage, id=entry.data.id})
                 entry.data.object = weed
                 --SetModelAsNoLongerNeeded(model)
             end
@@ -300,6 +349,9 @@ end
 AddEventHandler('onResourceStop', function(resourceName)
     if resourceName == GetCurrentResourceName() then
         deleteActivePlants()
+        if inScenario then
+            ClearPedTasksImmediately(PlayerPedId())
+        end
     end
 end)
 
@@ -329,7 +381,7 @@ Citizen.CreateThread(function()
         else
             if NetworkIsSessionStarted() then
                 ready = true
-                TriggerServerEvent('esx_uteknark:ready')
+                cropstate:bulkData()
             else
                 Citizen.Wait(100)
             end
@@ -350,18 +402,19 @@ RegisterCommand('toast', function(source, args, raw)
     end
 end,false)
 
+--[[ This is very broken with the actual planting implemented! Needs massive rewrite
 RegisterCommand('testforest', function(source, args, raw)
     local origin = GetEntityCoords(PlayerPedId())
     local count = #Growth * #Growth
     if args[1] and string.match(args[1],'^[0-9]+$') then
         count = tonumber(args[1])
     end
-
+    
     local randomStage = false
     if args[2] then
         randomStage = true
     end
-
+    
     TriggerEvent("chat:addMessage", {args={'Forest size', count}})
     local column = math.ceil(math.sqrt(count))
     TriggerEvent("chat:addMessage", {args={'Column', column}})
@@ -377,7 +430,7 @@ RegisterCommand('testforest', function(source, args, raw)
             if randomStage then
                 stage = math.random(#Growth)
             end
-            octree:insert(vector3(cursor.x, cursor.y, Z), 0.01, {stage=stage})
+            cropstate.octree:insert(vector3(cursor.x, cursor.y, Z), 0.01, {stage=stage})
         end
         cursor = cursor + vector3(0, Config.Distance.Space, 0)
         planted = planted + 1
@@ -385,6 +438,7 @@ RegisterCommand('testforest', function(source, args, raw)
             Citizen.Wait(0)
             cursor = cursor + vector3(Config.Distance.Space, -(Config.Distance.Space * column), 0)
         end
-
+        
     end
 end, false)
+--]]
