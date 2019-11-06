@@ -1,4 +1,4 @@
-local ENABLED = true
+local ENABLED = false
 local table = table
 
 local function drawDebugLine(instance,line)
