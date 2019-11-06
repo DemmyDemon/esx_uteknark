@@ -157,8 +157,18 @@ if onServer then
                 local stageData = Growth[plant.data.stage]
                 if stageData.interact then
                     if stageData.yield then
-                        -- TODO yield stuff!
-                        makeToast(src, _U('interact_text'), _U('interact_harvested'))
+                        local yield = math.random(Config.Yield[1], Config.Yield[2])
+                        local seeds = math.random(Config.YieldSeed[1], Config.YieldSeed[2])
+                        if GiveItem(src, Config.Items.Product, yield) then
+                            cropstate:remove(plantID)
+                            if seeds > 0 and GiveItem(src, Config.Items.Seed, seeds) then
+                                makeToast(src, _U('interact_text'), _U('interact_harvested', yield, seeds))
+                            else
+                                makeToast(src, _U('interact_text'), _U('interact_harvested', yield, 0))
+                            end
+                        else
+                            makeToast(src, _U('interact_text'), _U('interact_full', yield))
+                        end
                     else
                         if Config.Items.Tend then
                             -- TODO cost-to-tend

@@ -24,5 +24,6 @@ Locales['en'] = {
     interact_text = 'Plant interaction',
     interact_tended = 'Plant tended',
     interact_destroyed = 'Plant destroyed',
-    interact_harvested = 'Plant harvested',
+    interact_harvested = 'Plant harvested: %i weed, %i seeds',
+    interact_full = 'You can\'t hold %i more weed!',
 }
