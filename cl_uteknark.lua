@@ -176,6 +176,25 @@ function getPlantingLocation(visible)
 
 end
 
+function GetHeadingFromPoints(a, b)
+
+    if not a or not b then
+        return 0.0
+    end
+    if a.x == b.x and a.y == b.y then
+        return 0.0
+    end
+    if #(a - b) < 1 then
+        return 0.0
+    end
+
+    local theta = math.atan(b.x - a.x,a.y - b.y)
+    if theta < 0.0 then
+        theta = theta + (math.pi * 2)
+    end
+    return math.deg(theta) + 180 % 360
+end
+
 local inScenario = false
 local WEAPON_UNARMED = `WEAPON_UNARMED`
 local lastAction = 0
@@ -185,7 +204,9 @@ function RunScenario(name, facing)
     ClearPedTasks(playerPed)
     SetCurrentPedWeapon(playerPed, WEAPON_UNARMED)
     if facing then
-        -- TODO turn to face those coordinates
+        local heading = GetHeadingFromPoints(GetEntityCoords(playerPed), facing)
+        SetEntityHeading(playerPed, heading)
+        Citizen.Wait(0) -- So it syncs before we start the scenario!
     end
     TaskStartScenarioInPlace(playerPed, name, 0, true)
     inScenario = true
