@@ -9,6 +9,22 @@ What if you open up the whole map, so every patch of dirt, every lawn and every 
 
 That is exactly what UteKnark does!
 
+# Player manual
+
+First you need to get a hold of seeds. How you do this is different from server to server. Ask whatever support staff your server has.
+
+Next you will have to find somewhere to plant. Almost anywhere where there is grass or dirt will work, and even some places with sand! Make sure it's not directly under something, but has a pretty clear view of the sky.
+
+When you have your spot, use the seed item in your inventory. You will get feedback on the planting process.
+
+Shortly after planting, your little sapling will need some tending. It depends on soil quality, but it's within a couple of minutes.
+
+When the sapling has been tended, it will need some time to grow, and then it will need tending again. If you fail to tend your plant, it will die. What is needed for the tending process can be different from server to server, but by default you don't need anything.
+
+Once the plant has reached the very last stage (Stage 6 by default), it will be ready to harvest. How much weed you get, and how many seeds, is entirely up to the server you play on.
+
+At any point during this process, anyone can come along and destroy your plant, so you want to put it somewhere nobody will find it. Keep in mind that anyone can harvest it when it's ready, too, so you might want to guard it!
+
 # Moar info plx
 
 - Why the weird name? 
