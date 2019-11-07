@@ -44,12 +44,12 @@ local cropstateMethods = {
         local plant = instance.index[id]
         plant.data.stage = stage
         if onServer then
+            plant.data.time = os.time()
             MySQL.Async.execute("UPDATE `uteknark` SET `stage` = @stage WHERE `id` = @id LIMIT 1;",
             {
                 ['@id'] = id,
                 ['@stage'] = stage,
             }, function(_)
-                plant.data.time = os.time()
                 TriggerClientEvent('esx_uteknark:update', -1, id, stage)
             end)
         elseif plant.data.object then
