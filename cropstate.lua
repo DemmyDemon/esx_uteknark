@@ -1,17 +1,19 @@
 local onServer = IsDuplicityVersion()
 local cropstateMethods = {
-    plant = function(instance, location, soil)
+    plant = function(instance, location, soil, stage)
         if onServer then
-            MySQL.Async.insert("INSERT INTO `uteknark` (`x`, `y`, `z`, `soil`) VALUES (@x, @y, @z, @soil);",
+            stage = stage or 1
+            MySQL.Async.insert("INSERT INTO `uteknark` (`x`, `y`, `z`, `soil`, `stage`) VALUES (@x, @y, @z, @soil, @stage);",
             {
                 ['@x'] = location.x,
                 ['@y'] = location.y,
                 ['@z'] = location.z,
                 ['@soil'] = soil,
+                ['@stage'] = stage,
             },
             function(id)
-                instance:import(id, location, 1, os.time(), soil)
-                TriggerClientEvent('esx_uteknark:planted',-1, id, location, 1)
+                instance:import(id, location, stage, os.time(), soil)
+                TriggerClientEvent('esx_uteknark:planted',-1, id, location, stage)
             end)
         else
             Citizen.Trace("Attempt to cropstate:plant on client. Not going to work.\n")
@@ -22,11 +24,16 @@ local cropstateMethods = {
             MySQL.Async.fetchAll("SELECT `id`, `stage`, UNIX_TIMESTAMP(`time`) AS `time`, `x`, `y`, `z`, `soil` FROM `uteknark`;", 
             {},
             function(rows)
-                for _,row in ipairs(rows) do
-                    instance:import(row.id, vector3(row.x, row.y, row.z), row.stage, row.time, row.soil)
-                end
-                if callback then callback(#rows) end
-                instance.loaded = true
+                Citizen.CreateThread(function()
+                    for rownum,row in ipairs(rows) do
+                        instance:import(row.id, vector3(row.x, row.y, row.z), row.stage, row.time, row.soil)
+                        if rownum % 50 == 0 then
+                            Citizen.Wait(0)
+                        end
+                    end
+                    if callback then callback(#rows) end
+                    instance.loaded = true
+                end)
             end)
         else
             Citizen.Trace("Attempt to cropstate:load on client. Not going to work\n")
@@ -62,7 +69,14 @@ local cropstateMethods = {
     remove = function(instance, id)
         local object = instance.index[id]
         object.data.deleted = true
-        object.node:remove(object.oindex)
+        if object.node then
+            -- NOTE: In rare cases the node is being re-assigned while a remove is happening.
+            -- This cases `node` to be nil here, crashing the script.
+            -- Technically this is a memory leak because the object will then exist in the reflowed node.
+            -- It's not a real problem, however, as it's exceedingly rare and not even a whole kilobyte.
+            -- The object will still get deleted, and is not propagated to clients, so it's just a data ghost.
+            object.node:remove(object.oindex)
+        end
         instance.index[id] = nil
         if onServer then
             MySQL.Async.execute("DELETE FROM `uteknark` WHERE `id` = @id LIMIT 1;",

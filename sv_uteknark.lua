@@ -167,6 +167,33 @@ AddEventHandler ('esx_uteknark:log',function(...)
     log(src,GetPlayerName(src),...)
 end)
 
+RegisterNetEvent('esx_uteknark:test_forest')
+AddEventHandler ('esx_uteknark:test_forest',function(forest)
+    local src = source
+
+
+    if IsPlayerAceAllowed(src, 'command.uteknark') then
+
+        local soil
+        for candidate, quality in pairs(Config.Soil) do
+            soil = candidate
+            if quality >= 1.0 then
+                break
+            end
+        end
+
+        log(GetPlayerName(src),'('..src..') is magically planting a forest of',#forest,'plants')
+        for i, tree in ipairs(forest) do
+            cropstate:plant(tree.location, soil, tree.stage)
+            if i % 25 == 0 then
+                Citizen.Wait(0)
+            end
+        end
+    else
+        log('OY!', GetPlayerName(src),'with ID',src,'tried to spawn a test forest, BUT IS NOT ALLOWED!')
+    end
+end)
+
 Citizen.CreateThread(function()
 	while ESX == nil and ESXTries > 0 do
         TriggerEvent('esx:getSharedObject', function(obj)
@@ -211,7 +238,6 @@ Citizen.CreateThread(function()
         local plantsHandled = 0
         for id, plant in pairs(cropstate.index) do
             if type(id) == 'number' then -- Because of the whole "hashtable = true" thing
-                
                 local stageData = Growth[plant.data.stage]
                 local growthTime = (stageData.time * 60 * Config.TimeMultiplier)
                 -- TODO: Implement soil quality!
@@ -263,6 +289,23 @@ local commands = {
                     cropstate:update(plant, stage)
                 end
             end
+        end
+    end,
+    forest = function(source, args)
+        if source == 0 then
+            log('Forests can\'t grow in a console, buddy!')
+        else
+
+            local count = #Growth * #Growth
+            if args[1] and string.match(args[1], "%d+$") then
+                count = tonumber(args[1])
+            end
+
+            local randomStage = false
+            if args[2] then randomStage = true end
+
+            TriggerClientEvent('esx_uteknark:test_forest', source, count, randomStage)
+
         end
     end,
 }
