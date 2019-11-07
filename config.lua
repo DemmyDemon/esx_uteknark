@@ -26,7 +26,7 @@ Config = {
         -- What soil types can you grow on, and what are their multiplers/divisors? Higher is better.
         -- 0.5 means growing takes twice the time and you have half as much time to tend or harvest
         [2409420175] = 1.0,
-        [951832588] = 0.5,
+        -- [951832588] = 0.5,
         [3008270349] = 0.8,
         [3833216577] = 1.0,
         [223086562] = 1.1,

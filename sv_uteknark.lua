@@ -3,6 +3,11 @@ local ESXTries = 60
 local oneSyncEnabled = GetConvar('onesync_enabled', false)
 local octree = pOctree(vector3(0,1500,0),vector3(12000,12000,2000)) -- Covers the whole damn map!
 local VERBOSE = true
+local lastPlant = {}
+
+AddEventHandler('playerDropped',function(why)
+    lastPlant[source] = nil
+end)
 
 function log (...)
     local numElements = select('#',...)
@@ -122,6 +127,10 @@ function plantSeed(location, soil)
     return true
 end
 
+function abortAction(who)
+    TriggerClientEvent('esx_uteknark:abort', who)
+end
+
 RegisterNetEvent('esx_uteknark:success_plant')
 AddEventHandler ('esx_uteknark:success_plant', function(location, soil)
     local src = source
@@ -149,15 +158,19 @@ AddEventHandler ('esx_uteknark:success_plant', function(location, soil)
                 else
                     GiveItem(src, Config.Items.Seed)
                     makeToast(src, _U('planting_text'), _U('planting_failed'))
+                    abortAction(src)
                 end
             else
                 makeToast(src, _U('planting_text'), _U('planting_no_seed'))
+                abortAction(src)
             end
         else
             makeToast(src, _U('planting_text'), _U('planting_too_close'))
+            abortAction(src)
         end
     else
         makeToast(src, _U('planting_text'), _U('planting_not_suitable_soil'))
+        abortAction(src)
     end
 end)
 
@@ -199,10 +212,19 @@ Citizen.CreateThread(function()
         TriggerEvent('esx:getSharedObject', function(obj)
             ESX = obj
             ESX.RegisterUsableItem(Config.Items.Seed, function(source)
-                if HasItem(source, Config.Items.Seed) then
-                    TriggerClientEvent('esx_uteknark:attempt_plant', source)
+                local now = os.time()
+                local last = lastPlant[source] or 0
+                if now > last + (Config.ActionTime/1000) then
+                    if HasItem(source, Config.Items.Seed) then
+                        TriggerClientEvent('esx_uteknark:attempt_plant', source)
+                        lastPlant[source] = now
+                    else
+                        makeToast(source, _U('planting_text'), _U('planting_no_seed'))
+                        abortAction(source)
+                    end
                 else
-                    makeToast(source, _U('planting_text'), _U('planting_no_seed'))
+                    makeToast(source, _U('planting_text'), _U('planting_too_fast'))
+                    abortAction(source)
                 end
             end)
         end)

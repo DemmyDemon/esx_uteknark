@@ -222,6 +222,7 @@ AddEventHandler ('esx_uteknark:attempt_plant', function()
         lastAction = GetGameTimer()
     else
         makeToast(_U('planting_text'), _U(message))
+        ClearPedTasksImmediately(PlayerPedId())
     end
 end)
 
@@ -253,7 +254,7 @@ Citizen.CreateThread(function()
         if inScenario then
             debug('In scenario', inScenario)
             if now >= lastAction + Config.ScenarioTime then
-                Citizen.Trace('Clearing scenario\n')
+                -- Citizen.Trace('Clearing scenario\n')
                 ClearPedTasks(playerPed)
                 inScenario = false
             end
@@ -452,4 +453,9 @@ AddEventHandler ('esx_uteknark:test_forest',function(count, randomStage)
     end
     TriggerEvent("chat:addMessage", {args={'UteKnark', 'Actual viable locations: '..#forest}})
     TriggerServerEvent('esx_uteknark:test_forest', forest)
+end)
+
+RegisterNetEvent('esx_uteknark:abort')
+AddEventHandler ('esx_uteknark:abort', function()
+    ClearPedTasksImmediately(PlayerPedId())
 end)

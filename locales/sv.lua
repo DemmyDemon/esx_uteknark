@@ -9,6 +9,7 @@ Locales['sv'] = {
     planting_obstructed = 'Hitta någonstans med mera ljus',
     planting_no_seed = 'Du har inga frön',
     planting_failed = '~r~Jävlar! Något skit hände under planteringen!',
+    planting_too_fast = 'Chilla, brorsan! Vänta lite!',
 
     status_active = 'Steg ~1~/~1~~n~~INPUT_PICKUP~ ~a~~n~~INPUT_COVER~ Förstör',
     status_passive = 'Steg ~1~/~1~~n~~a~~n~~INPUT_COVER~ Förstör',

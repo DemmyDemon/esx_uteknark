@@ -9,6 +9,7 @@ Locales['en'] = {
     planting_obstructed = 'Find somewhere with more light',
     planting_no_seed = 'You don\'t have any seeds',
     planting_failed = '~r~There was an error while planting',
+    planting_too_fast = 'Chillax, bro! Wait a little.',
 
     status_active = 'Stage ~1~/~1~~n~~INPUT_PICKUP~ ~a~~n~~INPUT_COVER~ Destroy',
     status_passive = 'Stage ~1~/~1~~n~~a~~n~~INPUT_COVER~ Destroy',
