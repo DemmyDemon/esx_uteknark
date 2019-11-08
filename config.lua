@@ -1,5 +1,5 @@
 Config = {
-    Locale = 'en',
+    Locale = 'en-US',
     Distance = { -- All distances in meters
         Draw = 150.0,   -- How close to a plant do you need to be to see it?
         Interact = 1.5, -- How close do you need to be to interact?

@@ -1,4 +1,4 @@
-Locales['sv'] = {
+Locales['sv-SE'] = {
     planting_text = 'Plantering',
     planting_ok = 'Lyckad plantering!',
     planting_in_vehicle = 'Slänga frön ur fönstret, eller vad?',
