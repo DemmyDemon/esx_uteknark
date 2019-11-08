@@ -40,7 +40,6 @@ local cropstateMethods = {
         end
     end,
     import = function(instance, id, location, stage, time, soil)
-        Citizen.Trace("Importing plant "..id.." at "..tostring(location).."\n")
         local success, object = instance.octree:insert(location, 0.01, {id=id, stage=stage, time=time, soil=soil})
         if not success then
             Citizen.Trace(string.format("Uteknark failed to import plant with ID %i into octree\n", id))
@@ -97,7 +96,6 @@ local cropstateMethods = {
         if onServer then
             target = target or -1
             while not instance.loaded do
-                -- Citizen.Trace("bulkData waiting for instance to load...\n")
                 Citizen.Wait(1000)
             end
             local forest = {}
@@ -136,14 +134,12 @@ setmetatable(cropstate,cropstateMeta)
 if onServer then
     RegisterNetEvent('esx_uteknark:request_data')
     AddEventHandler ('esx_uteknark:request_data', function()
-        --Citizen.Trace("Data request from "..source.."\n")
         cropstate:bulkData(source)
     end)
     
     RegisterNetEvent('esx_uteknark:remove')
     AddEventHandler ('esx_uteknark:remove', function(plantID, nearLocation)
         local src = source
-        -- Citizen.Trace(src.." wants to remove "..plantID.." near "..tostring(nearLocation).."\n")
         local plant = cropstate.index[plantID]
         if plant then
             local plantLocation = plant.bounds.location
@@ -208,7 +204,6 @@ if onServer then
 else
     RegisterNetEvent('esx_uteknark:bulk_data')
     AddEventHandler ('esx_uteknark:bulk_data', function(forest)
-        Citizen.Trace("Uteknark got bulk data with "..#forest.." entries\n")
         for i, plant in ipairs(forest) do
             cropstate:import(plant.id, plant.location, plant.stage)
         end
@@ -227,7 +222,6 @@ else
 
     RegisterNetEvent('esx_uteknark:removePlant')
     AddEventHandler ('esx_uteknark:removePlant', function(plantID)
-        Citizen.Trace("Got order to remove plant "..plantID.."\n")
         cropstate:remove(plantID)
     end)
 end

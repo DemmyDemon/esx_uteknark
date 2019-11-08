@@ -112,7 +112,7 @@ function makeToast(target, subject, message)
     TriggerClientEvent('esx_uteknark:make_toast', target, subject, message)
 end
 function inChat(target, message)
-    TriggerClientEvent('chat:addMessage',target,{args={'Uteknark', message}})
+    TriggerClientEvent('chat:addMessage',target,{args={'UteKnark', message}})
 end
 
 function plantSeed(location, soil)
@@ -262,7 +262,6 @@ Citizen.CreateThread(function()
             if type(id) == 'number' then -- Because of the whole "hashtable = true" thing
                 local stageData = Growth[plant.data.stage]
                 local growthTime = (stageData.time * 60 * Config.TimeMultiplier)
-                -- TODO: Implement soil quality!
                 local soilQuality = Config.Soil[plant.data.soil] or 1.0
 
                 if stageData.interact then

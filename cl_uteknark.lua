@@ -199,7 +199,6 @@ local inScenario = false
 local WEAPON_UNARMED = `WEAPON_UNARMED`
 local lastAction = 0
 function RunScenario(name, facing)
-    -- Citizen.Trace("Attempting to run scenario "..name.."\n")
     local playerPed = PlayerPedId()
     ClearPedTasks(playerPed)
     SetCurrentPedWeapon(playerPed, WEAPON_UNARMED)
@@ -214,7 +213,6 @@ end
 
 RegisterNetEvent('esx_uteknark:attempt_plant')
 AddEventHandler ('esx_uteknark:attempt_plant', function()
-    -- false, 'planting_too_close', hitLocation, surfaceNormal, material
     local plantable, message, location, _, soil = getPlantingLocation()
     if plantable then
         TriggerServerEvent('esx_uteknark:success_plant', location, soil)
@@ -288,6 +286,7 @@ Citizen.CreateThread(function()
                     debug('Closest pant is stage', closestPlant.stage)
                     DrawIndicator(closestPlant.at + stage.marker.offset, stage.marker.color)
                     debug('Within intraction distance!')
+                    -- TODO: Implement some kind of "speed limit" on interactions
                     DisableControlAction(0, 44, true) -- Disable INPUT_COVER, as it's used to destroy plants
                     if now >= lastAction + Config.ActionTime then
                         if IsDisabledControlJustPressed(0, 44) then
@@ -457,5 +456,6 @@ end)
 
 RegisterNetEvent('esx_uteknark:abort')
 AddEventHandler ('esx_uteknark:abort', function()
+    -- FIXME: This causes people to ninja out of moving cars if they try to plant while driving
     ClearPedTasksImmediately(PlayerPedId())
 end)
