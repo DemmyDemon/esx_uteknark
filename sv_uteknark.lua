@@ -4,6 +4,8 @@ local oneSyncEnabled = GetConvar('onesync_enabled', false)
 local octree = pOctree(vector3(0,1500,0),vector3(12000,12000,2000)) -- Covers the whole damn map!
 local VERBOSE = true
 local lastPlant = {}
+local tickTimes = {}
+local tickPlantCount = 0
 
 AddEventHandler('playerDropped',function(why)
     lastPlant[source] = nil
@@ -112,7 +114,11 @@ function makeToast(target, subject, message)
     TriggerClientEvent('esx_uteknark:make_toast', target, subject, message)
 end
 function inChat(target, message)
-    TriggerClientEvent('chat:addMessage',target,{args={'UteKnark', message}})
+    if target == 0 then
+        log(message)
+    else
+        TriggerClientEvent('chat:addMessage',target,{args={'UteKnark', message}})
+    end
 end
 
 function plantSeed(location, soil)
@@ -257,6 +263,7 @@ Citizen.CreateThread(function()
     while true do
         Citizen.Wait(0)
         local now = os.time()
+        local begin = GetGameTimer()
         local plantsHandled = 0
         for id, plant in pairs(cropstate.index) do
             if type(id) == 'number' then -- Because of the whole "hashtable = true" thing
@@ -289,7 +296,13 @@ Citizen.CreateThread(function()
                 end
             end
         end
-        -- verbose('Uteknark growth tick took',os.time() - now,'seconds for',plantsHandled,'plants')
+
+        tickPlantCount = plantsHandled
+        local tickTime = GetGameTimer() - begin
+        table.insert(tickTimes, tickTime)
+        while #tickTimes > 20 do
+            table.remove(tickTimes, 1)
+        end
     end
 end)
 
@@ -304,12 +317,22 @@ local commands = {
     stage = function(source, args)
         if args[1] and string.match(args[1], "^%d+$") then
             local plant = tonumber(args[1])
-            if args[2] and string.match(args[2], "^%d+$") then
-                local stage = tonumber(args[2])
-                if (stage <= #Growth) then
-                    cropstate:update(plant, stage)
+            if cropstate.index[plant] then
+                if args[2] and string.match(args[2], "^%d+$") then
+                    local stage = tonumber(args[2])
+                    if stage > 0 and stage <= #Growth then
+                        cropstate:update(plant, stage)
+                    else
+                        inChat(source, string.format("%i is an invalid stage", stage))
+                    end
+                else
+                    inChat(source, "What stage?")
                 end
+            else
+                inChat(source,string.format("Plant %i does not exist!", plant))
             end
+        else
+            inChat(source, "What plant, you say?")
         end
     end,
     forest = function(source, args)
@@ -327,6 +350,19 @@ local commands = {
 
             TriggerClientEvent('esx_uteknark:test_forest', source, count, randomStage)
 
+        end
+    end,
+    stats = function(source, args)
+        if cropstate.loaded then
+            local totalTime = 0
+            for i,time in ipairs(tickTimes) do
+                totalTime = totalTime + time
+            end
+            local tickTimeAverage = totalTime / #tickTimes
+            inChat(source, string.format("Tick time average: %.1fms", tickTimeAverage))
+            inChat(source, string.format("Plant count: %i", tickPlantCount))
+        else
+            inChat(source,'Not loaded yet')
         end
     end,
 }

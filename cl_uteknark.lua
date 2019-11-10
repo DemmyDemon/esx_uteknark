@@ -252,7 +252,6 @@ Citizen.CreateThread(function()
         if inScenario then
             debug('In scenario', inScenario)
             if now >= lastAction + Config.ScenarioTime then
-                -- Citizen.Trace('Clearing scenario\n')
                 ClearPedTasks(playerPed)
                 inScenario = false
             end
