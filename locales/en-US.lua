@@ -20,7 +20,7 @@ Locales['en-US'] = {
     growth_yield = 'Harvest',
 
     command_invalid = 'Invalid directive: %s',
-    command_empty = 'Yes?',
+    command_empty = 'Version %s',
 
     interact_text = 'Plant interaction',
     interact_tended = 'Plant tended',

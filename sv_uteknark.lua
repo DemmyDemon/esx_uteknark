@@ -2,10 +2,11 @@ local ESX = nil
 local ESXTries = 60
 local oneSyncEnabled = GetConvar('onesync_enabled', false)
 local octree = pOctree(vector3(0,1500,0),vector3(12000,12000,2000)) -- Covers the whole damn map!
-local VERBOSE = true
+local VERBOSE = false
 local lastPlant = {}
 local tickTimes = {}
 local tickPlantCount = 0
+local VERSION = '1.0.0'
 
 AddEventHandler('playerDropped',function(why)
     lastPlant[source] = nil
@@ -397,10 +398,6 @@ RegisterCommand('uteknark', function(source, args, raw)
             inChat(source,_U('command_invalid', directive))
         end
     else
-        if source == 0 then
-            log('Uteknark at your service!')
-        else
-            inChat(source, _U('command_empty'))
-        end
+        inChat(source, _U('command_empty', VERSION))
     end
 end,true)

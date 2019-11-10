@@ -20,7 +20,7 @@ Locales['sv-SE'] = {
     growth_yield = 'Skörda',
 
     command_invalid = 'Ogiltigt direktiv: %s',
-    command_empty = 'Ja?',
+    command_empty = 'Versjon %s',
 
     interact_text = 'Växtinteraktion',
     interact_tended = 'Växt vårdad',
