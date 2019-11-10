@@ -365,6 +365,13 @@ local commands = {
             inChat(source,'Not loaded yet')
         end
     end,
+    groundmat = function(source, args)
+        if source == 0 then
+            log('Console. The ground material is CONSOLE.')
+        else
+            TriggerClientEvent('esx_uteknark:groundmat', source)
+        end
+    end,
 }
 
 RegisterCommand('uteknark', function(source, args, raw)

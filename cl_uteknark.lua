@@ -406,18 +406,21 @@ Citizen.CreateThread(function()
     end
 end)
 
--- TODO:  Below are debug/dev functions and shuld be disabled for release!
-
-RegisterCommand('groundmat',function(source, args, raw)
+RegisterNetEvent('esx_uteknark:groundmat')
+AddEventHandler ('esx_uteknark:groundmat', function()
     local plantable, message, where, normal, material = getPlantingLocation(true)
-    TriggerEvent("chat:addMessage", {args={'Material', material}})
-end, false)
+    TriggerEvent("chat:addMessage", {args={'Ground material', material}})
+    serverlog('Ground material:',material)
 
-RegisterCommand('toast', function(source, args, raw)
-    if #args > 0 then
-        makeToast(_U('planting_text'), table.concat(args, " "))
+    if Config.Soil[material] then
+        local quality = Config.Soil[material]
+        TriggerEvent("chat:addMessage", {args={'Soil quality', quality}})
+        serverlog('Soil quality:', quality)
+    else
+        TriggerEvent("chat:addMessage", {args={'Material not whitelisted'}})
+        serverlog('Material not whitelisted')
     end
-end,false)
+end)
 
 RegisterNetEvent('esx_uteknark:test_forest')
 AddEventHandler ('esx_uteknark:test_forest',function(count, randomStage)
