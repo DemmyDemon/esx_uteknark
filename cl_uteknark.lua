@@ -345,7 +345,7 @@ Citizen.CreateThread(function()
                 SetEntityLodDist(weed, math.floor(drawDistance))
                 table.insert(activePlants, {node=entry, object=weed, at=entry.bounds.location, stage=stage, id=entry.data.id})
                 entry.data.object = weed
-                --SetModelAsNoLongerNeeded(model)
+                SetModelAsNoLongerNeeded(model)
             end
         end, true)
         Citizen.Wait(1500)
