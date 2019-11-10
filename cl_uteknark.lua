@@ -285,7 +285,6 @@ Citizen.CreateThread(function()
                     debug('Closest pant is stage', closestPlant.stage)
                     DrawIndicator(closestPlant.at + stage.marker.offset, stage.marker.color)
                     debug('Within intraction distance!')
-                    -- TODO: Implement some kind of "speed limit" on interactions
                     DisableControlAction(0, 44, true) -- Disable INPUT_COVER, as it's used to destroy plants
                     if now >= lastAction + Config.ActionTime then
                         if IsDisabledControlJustPressed(0, 44) then
