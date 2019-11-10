@@ -14,6 +14,7 @@ local cropstateMethods = {
             function(id)
                 instance:import(id, location, stage, os.time(), soil)
                 TriggerClientEvent('esx_uteknark:planted',-1, id, location, stage)
+                verbose('Plant',id,'was planted.')
             end)
         else
             Citizen.Trace("Attempt to cropstate:plant on client. Not going to work.\n")
@@ -21,6 +22,7 @@ local cropstateMethods = {
     end,
     load = function(instance, callback)
         if onServer then
+            verbose('Loading...')
             MySQL.Async.fetchAll("SELECT `id`, `stage`, UNIX_TIMESTAMP(`time`) AS `time`, `x`, `y`, `z`, `soil` FROM `uteknark`;", 
             {},
             function(rows)
@@ -33,6 +35,7 @@ local cropstateMethods = {
                     end
                     if callback then callback(#rows) end
                     instance.loaded = true
+                    verbose('Load complete')
                 end)
             end)
         else
@@ -57,6 +60,7 @@ local cropstateMethods = {
                 ['@stage'] = stage,
             }, function(_)
                 TriggerClientEvent('esx_uteknark:update', -1, id, stage)
+                verbose('Set plant',id,'to stage',stage)
             end)
         elseif plant.data.object then
             if DoesEntityExist(plant.data.object) then
@@ -82,6 +86,7 @@ local cropstateMethods = {
             { ['@id'] = id },
             function()
                 TriggerClientEvent('esx_uteknark:removePlant', -1, id)
+                verbose('Removed plant',id)
             end)
         else
             if object.data.object then
@@ -94,6 +99,7 @@ local cropstateMethods = {
     end,
     bulkData = function(instance, target)
         if onServer then
+            verbose('Preparing bulk plant data for player',target)
             target = target or -1
             while not instance.loaded do
                 Citizen.Wait(1000)
@@ -178,15 +184,16 @@ if onServer then
                             end
                         else
                             makeToast(src, _U('interact_text'), _U('interact_full', yield))
+                            abortAction(src)
                         end
                     else
-                        if Config.Items.Tend then
-                            -- TODO cost-to-tend
-                            -- makeToast(src, _U('interact_text'), _U('interact_tended'))
-                        else
-                            if #Growth > plant.data.stage then
+                        if #Growth > plant.data.stage then
+                            if not Config.Items.Tend or TakeItem(src, Config.Items.Tend) then
                                 makeToast(src, _U('interact_text'), _U('interact_tended'))
                                 cropstate:update(plantID, plant.data.stage + 1)
+                            else
+                                abortAction(src)
+                                makeToast(src, _U('interact_text'), _U('interact_missing_item'))
                             end
                         end
                     end

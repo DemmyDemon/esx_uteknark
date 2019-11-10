@@ -321,6 +321,7 @@ local commands = {
                 if args[2] and string.match(args[2], "^%d+$") then
                     local stage = tonumber(args[2])
                     if stage > 0 and stage <= #Growth then
+                        log(source,GetPlayerName(source),'set plant',plant,'to stage',stage)
                         cropstate:update(plant, stage)
                     else
                         inChat(source, string.format("%i is an invalid stage", stage))

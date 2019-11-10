@@ -27,4 +27,5 @@ Locales['en-US'] = {
     interact_destroyed = 'Plant destroyed',
     interact_harvested = 'Plant harvested: %i weed, %i seeds',
     interact_full = 'You can\'t hold %i more weed!',
+    interact_missing_item = 'You don\'t have what you need to tend this plant!',
 }
