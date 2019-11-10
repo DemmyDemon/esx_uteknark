@@ -48,7 +48,7 @@ local debugMeta = {
         instance:add(...)
     end,
     __newindex = function(instance, key, value)
-        -- TODO "permanent message kvp" sort of thing?
+        -- Just drop. Ignore. Go away.
     end,
     __index = function(instance,key)
         return instance._methods[key]

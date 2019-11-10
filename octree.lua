@@ -76,7 +76,7 @@ end
 
 local boundsMeta = {
     __newindex = function(instance,key,value)
-        -- TODO what do I even need here?
+        -- Drop. Ignore. Go away.
     end,
     __index = function(instance,key)
         return instance._methods[key]
