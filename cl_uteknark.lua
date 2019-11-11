@@ -392,10 +392,8 @@ AddEventHandler ('esx_uteknark:pyromaniac',function(location)
         end
         if #(location - myLocation) <= Config.Distance.Draw then
             Citizen.CreateThread(function()
-                print("PYRO\n")
                 local begin = GetGameTimer()
                 if not HasNamedPtfxAssetLoaded(Config.Burn.Effect) then
-                    print("Loading burning effect asset "..Config.Burn.Collection)
                     RequestNamedPtfxAsset(Config.Burn.Collection)
                     while not HasNamedPtfxAssetLoaded(Config.Burn.Collection) and GetGameTimer() <= begin + Config.Burn.Duration do
                         Citizen.Wait(0)
@@ -409,7 +407,6 @@ AddEventHandler ('esx_uteknark:pyromaniac',function(location)
                 while GetGameTimer() <= begin + Config.Burn.Duration do
                     Citizen.Wait(0)
                 end
-                print("End of pyro")
                 StopParticleFxLooped(handle, 0)
                 RemoveNamedPtfxAsset(Config.Burn.Collection)
             end)
