@@ -19,6 +19,15 @@ Config = {
         Frob = 'PROP_HUMAN_BUM_BIN',
         Destroy = 'WORLD_HUMAN_STAND_FIRE',
     },
+    Burn = { -- Burn effect when destroying a plant
+        Enabled     = true,                         -- Is the burn effect even enabled?
+        Collection  = 'scr_mp_house',               -- "Particle effect asset" in RAGE
+        Effect      = 'scr_mp_int_fireplace_sml',   -- Which specific effect in that asset?
+        Scale       = 1.5,                          -- Some are big, some are small, so adjusting to your needs makes sense
+        Rotation    = vector3(0,0,0),               -- Because some effects point in unexpected directions
+        Offset      = vector3(0,0,0.2),             -- The distance from the plant root location
+        Duration    = 20000,                        -- How long should it burn, in milliseconds?
+    },
     Yield = {5,10}, -- How many Items.Product does each plant yield? {5,10} means "from 5 to 10, inclusive"
     YieldSeed = {0,1}, -- Same as Yield, except for the amount of seeds you get back
     TimeMultiplier = 1.0, -- Multiplier for the growth/tend times

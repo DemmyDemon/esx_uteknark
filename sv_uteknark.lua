@@ -374,6 +374,13 @@ local commands = {
             TriggerClientEvent('esx_uteknark:groundmat', source)
         end
     end,
+    pyro = function(source, args)
+        if source == 0 then
+            log('You can\'t really test particle effects on the console.')
+        else
+            TriggerClientEvent('esx_uteknark:pyromaniac', source)
+        end
+    end,
 }
 
 RegisterCommand('uteknark', function(source, args, raw)

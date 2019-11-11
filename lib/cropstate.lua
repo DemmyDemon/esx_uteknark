@@ -71,6 +71,7 @@ local cropstateMethods = {
     end,
     remove = function(instance, id)
         local object = instance.index[id]
+        local location = object.bounds.location
         object.data.deleted = true
         if object.node then
             -- NOTE: In rare cases the node is being re-assigned while a remove is happening.
@@ -86,6 +87,7 @@ local cropstateMethods = {
             { ['@id'] = id },
             function()
                 TriggerClientEvent('esx_uteknark:removePlant', -1, id)
+                TriggerClientEvent('esx_uteknark:pyromaniac', -1, location)
                 verbose('Removed plant',id)
             end)
         else

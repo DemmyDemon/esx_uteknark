@@ -383,6 +383,40 @@ AddEventHandler ('esx_uteknark:toggle_debug', function()
     end
 end)
 
+RegisterNetEvent('esx_uteknark:pyromaniac')
+AddEventHandler ('esx_uteknark:pyromaniac',function(location)
+    if Config.Burn.Enabled then
+        local myLocation = GetEntityCoords(PlayerPedId())
+        if not location then
+            location = myLocation + vector3(0,0,-1) -- Because the ped location is one meter off the ground.
+        end
+        if #(location - myLocation) <= Config.Distance.Draw then
+            Citizen.CreateThread(function()
+                print("PYRO\n")
+                local begin = GetGameTimer()
+                if not HasNamedPtfxAssetLoaded(Config.Burn.Effect) then
+                    print("Loading burning effect asset "..Config.Burn.Collection)
+                    RequestNamedPtfxAsset(Config.Burn.Collection)
+                    while not HasNamedPtfxAssetLoaded(Config.Burn.Collection) and GetGameTimer() <= begin + Config.Burn.Duration do
+                        Citizen.Wait(0)
+                    end
+                    if not HasNamedPtfxAssetLoaded(Config.Burn.Collection) then
+                        print("UteKnark failed to load particle effects asset "..Config.Burn.Collection)
+                    end
+                end
+                UseParticleFxAsset(Config.Burn.Collection)
+                local handle = StartParticleFxLoopedAtCoord(Config.Burn.Effect, location + Config.Burn.Offset, Config.Burn.Rotation, Config.Burn.Scale * 1.0, false, false, false)
+                while GetGameTimer() <= begin + Config.Burn.Duration do
+                    Citizen.Wait(0)
+                end
+                print("End of pyro")
+                StopParticleFxLooped(handle, 0)
+                RemoveNamedPtfxAsset(Config.Burn.Collection)
+            end)
+        end
+    end
+end)
+
 Citizen.CreateThread(function()
     local ready = false
     while true do
