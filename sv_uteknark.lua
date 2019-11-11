@@ -6,7 +6,7 @@ local VERBOSE = false
 local lastPlant = {}
 local tickTimes = {}
 local tickPlantCount = 0
-local VERSION = '1.0.0'
+local VERSION = '1.1.0'
 
 AddEventHandler('playerDropped',function(why)
     lastPlant[source] = nil
@@ -99,7 +99,7 @@ function GiveItem(who, what, count)
     end
     local itemspec =  xPlayer.getInventoryItem(what)
     if itemspec then
-        if itemspec.limit == -1 or itemspec.count + count <= itemspec.limit then
+        if not itemspec.limit or itemspec.limit == -1 or itemspec.count + count <= itemspec.limit then
             xPlayer.addInventoryItem(what, count)
             return true
         else
@@ -218,6 +218,11 @@ Citizen.CreateThread(function()
 	while ESX == nil and ESXTries > 0 do
         TriggerEvent('esx:getSharedObject', function(obj)
             ESX = obj
+            for forWhat,itemName in pairs(Config.Items) do
+                if not ESX.Items[itemName] then
+                    log('WARNING:',forWhat,'item in cofiguration ('..itemName..') does not exist!')
+                end
+            end
             ESX.RegisterUsableItem(Config.Items.Seed, function(source)
                 local now = os.time()
                 local last = lastPlant[source] or 0
