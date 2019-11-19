@@ -211,16 +211,35 @@ function RunScenario(name, facing)
     inScenario = true
 end
 
+RegisterNetEvent('esx_uteknark:do')
+AddEventHandler ('esx_uteknark:do', function(scenarioName, location)
+    if Config.Scenario[scenarioName] then
+        print("Got order for scenario " .. scenarioName)
+        Citizen.CreateThread(function()
+            local begin = GetGameTimer()
+            RunScenario(Config.Scenario[scenarioName], location)
+            while GetGameTimer() <= begin + Config.ScenarioTime do
+                Citizen.Wait(0)
+            end
+            if inScenario then
+                ClearPedTasks(PlayerPedId())
+            end
+            inScenario = false
+            print("Scenario "..scenarioName.." ends")
+        end)
+    else
+        print("Got ordered to do invalid scenario "..scenarioName)
+    end
+end)
+
 RegisterNetEvent('esx_uteknark:attempt_plant')
 AddEventHandler ('esx_uteknark:attempt_plant', function()
     local plantable, message, location, _, soil = getPlantingLocation()
     if plantable then
         TriggerServerEvent('esx_uteknark:success_plant', location, soil)
-        RunScenario(Config.Scenario.Plant)
         lastAction = GetGameTimer()
     else
         makeToast(_U('planting_text'), _U(message))
-        ClearPedTasksImmediately(PlayerPedId())
     end
 end)
 
@@ -248,15 +267,11 @@ Citizen.CreateThread(function()
     while true do
         local now = GetGameTimer()
         local playerPed = PlayerPedId()
-        
+
         if inScenario then
             debug('In scenario', inScenario)
-            if now >= lastAction + Config.ScenarioTime then
-                ClearPedTasks(playerPed)
-                inScenario = false
-            end
         end
-        
+
         if #activePlants > 0 then
             debug(#activePlants,'active plants')
             local myLocation = GetEntityCoords(playerPed)
@@ -292,16 +307,12 @@ Citizen.CreateThread(function()
                             table.remove(activePlants, closestIndex)
                             DeleteObject(closestPlant.object)
                             TriggerServerEvent('esx_uteknark:remove', closestPlant.id, myLocation)
-                            RunScenario(Config.Scenario.Destroy, closestPlant.at)
-                            -- FIXME: This causes people to run away!
-                            -- AddExplosion(closestPlant.at,24,0.5,true,false,0.0,true)
                         else
                             if stage.interact then
                                 interactHelp(closestPlant.stage, _U(stage.label))
                                 if IsControlJustPressed(0, 38) then
                                     lastAction = now
                                     TriggerServerEvent('esx_uteknark:frob', closestPlant.id, myLocation)
-                                    RunScenario(Config.Scenario.Frob, closestPlant.at)
                                 end
                             else
                                 passiveHelp(closestPlant.stage, _U(stage.label))
@@ -484,10 +495,4 @@ AddEventHandler ('esx_uteknark:test_forest',function(count, randomStage)
     end
     TriggerEvent("chat:addMessage", {args={'UteKnark', 'Actual viable locations: '..#forest}})
     TriggerServerEvent('esx_uteknark:test_forest', forest)
-end)
-
-RegisterNetEvent('esx_uteknark:abort')
-AddEventHandler ('esx_uteknark:abort', function()
-    -- FIXME: This causes people to ninja out of moving cars if they try to plant while driving
-    ClearPedTasksImmediately(PlayerPedId())
 end)

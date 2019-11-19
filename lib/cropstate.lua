@@ -155,6 +155,7 @@ if onServer then
             if distance <= Config.Distance.Interact then
                 cropstate:remove(plantID)
                 makeToast(src, _U('interact_text'), _U('interact_destroyed'))
+                doScenario(src, 'Destroy', plantLocation)
             else
                 Citizen.Trace(GetPlayerName(src)..' ('..src..') is too far away from '..plantID..' to remove it ('..distance'm)\n')
             end
@@ -179,6 +180,7 @@ if onServer then
                         local seeds = math.random(Config.YieldSeed[1], Config.YieldSeed[2])
                         if GiveItem(src, Config.Items.Product, yield) then
                             cropstate:remove(plantID)
+                            doScenario(src, 'Frob', plantLocation)
                             if seeds > 0 and GiveItem(src, Config.Items.Seed, seeds) then
                                 makeToast(src, _U('interact_text'), _U('interact_harvested', yield, seeds))
                             else
@@ -186,15 +188,14 @@ if onServer then
                             end
                         else
                             makeToast(src, _U('interact_text'), _U('interact_full', yield))
-                            abortAction(src)
                         end
                     else
                         if #Growth > plant.data.stage then
                             if not Config.Items.Tend or TakeItem(src, Config.Items.Tend) then
                                 makeToast(src, _U('interact_text'), _U('interact_tended'))
                                 cropstate:update(plantID, plant.data.stage + 1)
+                                doScenario(src, 'Frob', plantLocation)
                             else
-                                abortAction(src)
                                 makeToast(src, _U('interact_text'), _U('interact_missing_item'))
                             end
                         end

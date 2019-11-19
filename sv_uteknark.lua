@@ -6,7 +6,7 @@ local VERBOSE = false
 local lastPlant = {}
 local tickTimes = {}
 local tickPlantCount = 0
-local VERSION = '1.1.0'
+local VERSION = '1.1.1'
 
 AddEventHandler('playerDropped',function(why)
     lastPlant[source] = nil
@@ -134,8 +134,9 @@ function plantSeed(location, soil)
     return true
 end
 
-function abortAction(who)
-    TriggerClientEvent('esx_uteknark:abort', who)
+function doScenario(who, what, where)
+    verbose('Telling', who,'to',what,'at',where)
+    TriggerClientEvent('esx_uteknark:do', who, what, where)
 end
 
 RegisterNetEvent('esx_uteknark:success_plant')
@@ -162,22 +163,19 @@ AddEventHandler ('esx_uteknark:success_plant', function(location, soil)
             if TakeItem(src, Config.Items.Seed) then
                 if plantSeed(location, soil) then
                     makeToast(src, _U('planting_text'), _U('planting_ok'))
+                    doScenario(src, 'Plant', location)
                 else
                     GiveItem(src, Config.Items.Seed)
                     makeToast(src, _U('planting_text'), _U('planting_failed'))
-                    abortAction(src)
                 end
             else
                 makeToast(src, _U('planting_text'), _U('planting_no_seed'))
-                abortAction(src)
             end
         else
             makeToast(src, _U('planting_text'), _U('planting_too_close'))
-            abortAction(src)
         end
     else
         makeToast(src, _U('planting_text'), _U('planting_not_suitable_soil'))
-        abortAction(src)
     end
 end)
 
@@ -232,11 +230,9 @@ Citizen.CreateThread(function()
                         lastPlant[source] = now
                     else
                         makeToast(source, _U('planting_text'), _U('planting_no_seed'))
-                        abortAction(source)
                     end
                 else
                     makeToast(source, _U('planting_text'), _U('planting_too_fast'))
-                    abortAction(source)
                 end
             end)
         end)
