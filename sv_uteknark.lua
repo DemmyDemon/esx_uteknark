@@ -1,12 +1,10 @@
 local ESX = nil
-local ESXTries = 60
 local oneSyncEnabled = GetConvar('onesync_enabled', false)
-local octree = pOctree(vector3(0,1500,0),vector3(12000,12000,2000)) -- Covers the whole damn map!
 local VERBOSE = false
 local lastPlant = {}
 local tickTimes = {}
 local tickPlantCount = 0
-local VERSION = '1.1.1'
+local VERSION = '1.1.2'
 
 AddEventHandler('playerDropped',function(why)
     lastPlant[source] = nil
@@ -158,7 +156,7 @@ AddEventHandler ('esx_uteknark:success_plant', function(location, soil)
         end
     end
     if soil and Config.Soil[soil] then
-        local hits = octree:searchSphere(location, Config.Distance.Space)
+        local hits = cropstate.octree:searchSphere(location, Config.Distance.Space)
         if #hits == 0 then
             if TakeItem(src, Config.Items.Seed) then
                 if plantSeed(location, soil) then
@@ -212,35 +210,52 @@ AddEventHandler ('esx_uteknark:test_forest',function(forest)
     end
 end)
 
+function keyCount(tbl)
+    local count = 0
+    if type(tbl) == 'table' then
+        for key, value in pairs(tbl) do
+            count = count + 1
+        end
+    end
+    return count
+end
+
 Citizen.CreateThread(function()
-	while ESX == nil and ESXTries > 0 do
+    local ESXTries = 60
+    local itemsLoaded = false
+    while not itemsLoaded and ESXTries > 0 do
         TriggerEvent('esx:getSharedObject', function(obj)
             ESX = obj
-            for forWhat,itemName in pairs(Config.Items) do
-                if not ESX.Items[itemName] then
-                    log('WARNING:',forWhat,'item in cofiguration ('..itemName..') does not exist!')
-                end
-            end
-            ESX.RegisterUsableItem(Config.Items.Seed, function(source)
-                local now = os.time()
-                local last = lastPlant[source] or 0
-                if now > last + (Config.ActionTime/1000) then
-                    if HasItem(source, Config.Items.Seed) then
-                        TriggerClientEvent('esx_uteknark:attempt_plant', source)
-                        lastPlant[source] = now
+            if keyCount(ESX.Items) > 0 then
+                itemsLoaded = true
+                for forWhat,itemName in pairs(Config.Items) do
+                    if ESX.Items[itemName] then
+                        log(forWhat,'item in configuration ('..itemName..') found in ESX: Good!')
                     else
-                        makeToast(source, _U('planting_text'), _U('planting_no_seed'))
+                        log('WARNING:',forWhat,'item in cofiguration ('..itemName..') does not exist!')
                     end
-                else
-                    makeToast(source, _U('planting_text'), _U('planting_too_fast'))
                 end
-            end)
+                ESX.RegisterUsableItem(Config.Items.Seed, function(source)
+                    local now = os.time()
+                    local last = lastPlant[source] or 0
+                    if now > last + (Config.ActionTime/1000) then
+                        if HasItem(source, Config.Items.Seed) then
+                            TriggerClientEvent('esx_uteknark:attempt_plant', source)
+                            lastPlant[source] = now
+                        else
+                            makeToast(source, _U('planting_text'), _U('planting_no_seed'))
+                        end
+                    else
+                        makeToast(source, _U('planting_text'), _U('planting_too_fast'))
+                    end
+                end)
+            end
         end)
         Citizen.Wait(1000)
         ESXTries = ESXTries - 1
     end
     if not ESX then
-        Citizen.Trace("esx_uteknark could not obtain ESX object!\n")
+        log("CRITICAL ERROR: Could not obtain ESX object!\n")
     end
 end)
 

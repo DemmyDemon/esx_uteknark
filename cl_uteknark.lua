@@ -347,16 +347,21 @@ Citizen.CreateThread(function()
                         Citizen.Wait(0)
                     end
                 end
-                local offset = Growth[stage].offset or vector3(0,0,0)
-                local weed = CreateObject(model, entry.bounds.location + offset, false, false, false)
-                local heading = math.random(0,359) * 1.0
-                SetEntityHeading(weed, heading)
-                FreezeEntityPosition(weed, true)
-                SetEntityCollision(weed, false, true)
-                SetEntityLodDist(weed, math.floor(drawDistance))
-                table.insert(activePlants, {node=entry, object=weed, at=entry.bounds.location, stage=stage, id=entry.data.id})
-                entry.data.object = weed
-                SetModelAsNoLongerNeeded(model)
+                if not HasModelLoaded(model) then
+                    Citizen.Trace("Failed to load model for growth stage " .. stage ..", but will retry shortly!\n")
+                    Citizen.Wait(2500)
+                else
+                    local offset = Growth[stage].offset or vector3(0,0,0)
+                    local weed = CreateObject(model, entry.bounds.location + offset, false, false, false)
+                    local heading = math.random(0,359) * 1.0
+                    SetEntityHeading(weed, heading)
+                    FreezeEntityPosition(weed, true)
+                    SetEntityCollision(weed, false, true)
+                    SetEntityLodDist(weed, math.floor(drawDistance))
+                    table.insert(activePlants, {node=entry, object=weed, at=entry.bounds.location, stage=stage, id=entry.data.id})
+                    entry.data.object = weed
+                    SetModelAsNoLongerNeeded(model)
+                end
             end
         end, true)
         Citizen.Wait(1500)
