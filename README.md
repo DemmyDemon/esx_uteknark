@@ -84,4 +84,4 @@ At any point during this process, anyone can come along and destroy your plant, 
 - Tails for putting up with my obsessive coding into the night.
 - Degen for the encouragement and feedback.
 - VigeStig for the push to make it happen.
-- Testers: Rolkann (more to come as they remind me who they are)
+- Testers: Rolkann, Waldost (more to come as they remind me who they are)
