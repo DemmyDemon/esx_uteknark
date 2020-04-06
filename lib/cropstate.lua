@@ -69,7 +69,7 @@ local cropstateMethods = {
             plant.data.object = nil
         end
     end,
-    remove = function(instance, id)
+    remove = function(instance, id, withPyro)
         local object = instance.index[id]
         local location = object.bounds.location
         object.data.deleted = true
@@ -87,7 +87,9 @@ local cropstateMethods = {
             { ['@id'] = id },
             function()
                 TriggerClientEvent('esx_uteknark:removePlant', -1, id)
-                TriggerClientEvent('esx_uteknark:pyromaniac', -1, location)
+                if withPyro then
+                    TriggerClientEvent('esx_uteknark:pyromaniac', -1, location)
+                end
                 verbose('Removed plant',id)
             end)
         else
@@ -153,7 +155,7 @@ if onServer then
             local plantLocation = plant.bounds.location
             local distance = #( nearLocation - plantLocation)
             if distance <= Config.Distance.Interact then
-                cropstate:remove(plantID)
+                cropstate:remove(plantID, true)
                 makeToast(src, _U('interact_text'), _U('interact_destroyed'))
                 doScenario(src, 'Destroy', plantLocation)
             else

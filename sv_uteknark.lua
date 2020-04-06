@@ -4,7 +4,7 @@ local VERBOSE = false
 local lastPlant = {}
 local tickTimes = {}
 local tickPlantCount = 0
-local VERSION = '1.1.2'
+local VERSION = '1.1.3'
 
 AddEventHandler('playerDropped',function(why)
     lastPlant[source] = nil
