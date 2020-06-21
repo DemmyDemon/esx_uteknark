@@ -134,7 +134,7 @@ cropstate = {
     index = {
         hashtable = true, -- To *force* lua to make it a hashtable rather than an array.
     },
-    octree = pOctree(vector3(0,1500,0),vector3(12000,12000,2000)),
+    octree = pOctree(vector3(0,1500,0),vector3(12000,13000,2000)),
     loaded = false,
     _methods = cropstateMethods,
 }

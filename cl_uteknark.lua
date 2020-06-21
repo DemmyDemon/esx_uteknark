@@ -357,7 +357,9 @@ Citizen.CreateThread(function()
                     SetEntityHeading(weed, heading)
                     FreezeEntityPosition(weed, true)
                     SetEntityCollision(weed, false, true)
-                    SetEntityLodDist(weed, math.floor(drawDistance))
+                    if Config.SetLOD then
+                        SetEntityLodDist(weed, math.floor(drawDistance))
+                    end
                     table.insert(activePlants, {node=entry, object=weed, at=entry.bounds.location, stage=stage, id=entry.data.id})
                     entry.data.object = weed
                     SetModelAsNoLongerNeeded(model)

@@ -6,6 +6,7 @@ Config = {
         Space = 1.2,    -- How far apart do the plants need to be planted?
         Above = 5.0,    -- How much clear space above the planting space do you need to plant?
     },
+    SetLOD = false,       -- Should plant object LOD be messed with? (Might cause plant invisibility on very low settings!)
     ActionTime = 10000,   -- How many milliseconds does an action take (planting, destroying, harvesting, tending)
     ScenarioTime = 3000,  -- How long should the scenario/animations run?
     MaxGroundAngle = 0.6, -- How tilted can the ground be and still hold plants?
