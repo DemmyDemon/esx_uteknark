@@ -53,3 +53,20 @@ Config = {
         [-1286696947] = 1.0,
     },
 }
+
+Config.Seeds ={
+    ["seed_stardawg"] = {
+        timemultiplier = 1.0,
+        reward = 'bud_stardawg'
+    },
+
+    ["seed_lemonhaze"] = {
+        timemultiplier = 1.0,
+        reward = 'bud_lemonhaze'
+    },
+
+    ["seed_strawberryhaze"] = {
+        timemultiplier = 1.0,
+        reward = 'bud_strawberryhaze'
+    }
+}

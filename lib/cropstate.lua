@@ -1,15 +1,16 @@
 local onServer = IsDuplicityVersion()
 local cropstateMethods = {
-    plant = function(instance, location, soil, stage)
+    plant = function(instance, location, soil, stage, seedtype)
         if onServer then
             stage = stage or 1
-            MySQL.Async.insert("INSERT INTO `uteknark` (`x`, `y`, `z`, `soil`, `stage`) VALUES (@x, @y, @z, @soil, @stage);",
+            MySQL.Async.insert("INSERT INTO `uteknark` (`x`, `y`, `z`, `soil`, `stage`, `seedtype`) VALUES (@x, @y, @z, @soil, @stage, @seedtype);",
             {
                 ['@x'] = location.x,
                 ['@y'] = location.y,
                 ['@z'] = location.z,
                 ['@soil'] = soil,
                 ['@stage'] = stage,
+                ['@seedtype'] = seedtype,
             },
             function(id)
                 instance:import(id, location, stage, os.time(), soil)
@@ -23,12 +24,12 @@ local cropstateMethods = {
     load = function(instance, callback)
         if onServer then
             verbose('Loading...')
-            MySQL.Async.fetchAll("SELECT `id`, `stage`, UNIX_TIMESTAMP(`time`) AS `time`, `x`, `y`, `z`, `soil` FROM `uteknark`;", 
+            MySQL.Async.fetchAll("SELECT `id`, `stage`, UNIX_TIMESTAMP(`time`) AS `time`, `x`, `y`, `z`, `soil`, `seedtype` FROM `uteknark`;", 
             {},
             function(rows)
                 Citizen.CreateThread(function()
                     for rownum,row in ipairs(rows) do
-                        instance:import(row.id, vector3(row.x, row.y, row.z), row.stage, row.time, row.soil)
+                        instance:import(row.id, vector3(row.x, row.y, row.z), row.stage, row.time, row.soil, row.seedtype)
                         if rownum % 50 == 0 then
                             Citizen.Wait(0)
                         end
@@ -42,8 +43,8 @@ local cropstateMethods = {
             Citizen.Trace("Attempt to cropstate:load on client. Not going to work\n")
         end
     end,
-    import = function(instance, id, location, stage, time, soil)
-        local success, object = instance.octree:insert(location, 0.01, {id=id, stage=stage, time=time, soil=soil})
+    import = function(instance, id, location, stage, time, soil, seedtype)
+        local success, object = instance.octree:insert(location, 0.01, {id=id, stage=stage, time=time, soil=soil, seedtype=seedtype})
         if not success then
             Citizen.Trace(string.format("Uteknark failed to import plant with ID %i into octree\n", id))
         end

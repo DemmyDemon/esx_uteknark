@@ -120,7 +120,7 @@ function inChat(target, message)
     end
 end
 
-function plantSeed(location, soil)
+function plantSeed(location, soil, seedtype)
     
     local hits = cropstate.octree:searchSphere(location, Config.Distance.Space)
     if #hits > 0 then
@@ -128,7 +128,7 @@ function plantSeed(location, soil)
     end
 
     verbose('Planting at',location,'in soil', soil)
-    cropstate:plant(location, soil)
+    cropstate:plant(location, soil, seedtype)
     return true
 end
 
@@ -138,7 +138,7 @@ function doScenario(who, what, where)
 end
 
 RegisterNetEvent('esx_uteknark:success_plant')
-AddEventHandler ('esx_uteknark:success_plant', function(location, soil)
+AddEventHandler ('esx_uteknark:success_plant', function(location, soil, seedtype)
     local src = source
     if oneSyncEnabled and false then -- "and false" because something is weird in my OneSync stuff
         local ped = GetPlayerPed(src)
@@ -158,12 +158,12 @@ AddEventHandler ('esx_uteknark:success_plant', function(location, soil)
     if soil and Config.Soil[soil] then
         local hits = cropstate.octree:searchSphere(location, Config.Distance.Space)
         if #hits == 0 then
-            if TakeItem(src, Config.Items.Seed) then
-                if plantSeed(location, soil) then
+            if TakeItem(src, seedtype) then
+                if plantSeed(location, soil, seedtype) then
                     makeToast(src, _U('planting_text'), _U('planting_ok'))
                     doScenario(src, 'Plant', location)
                 else
-                    GiveItem(src, Config.Items.Seed)
+                    GiveItem(src, seedtype)
                     makeToast(src, _U('planting_text'), _U('planting_failed'))
                 end
             else
@@ -235,20 +235,20 @@ Citizen.CreateThread(function()
                         log('WARNING:',forWhat,'item in cofiguration ('..itemName..') does not exist!')
                     end
                 end
-                ESX.RegisterUsableItem(Config.Items.Seed, function(source)
-                    local now = os.time()
-                    local last = lastPlant[source] or 0
-                    if now > last + (Config.ActionTime/1000) then
-                        if HasItem(source, Config.Items.Seed) then
-                            TriggerClientEvent('esx_uteknark:attempt_plant', source)
-                            lastPlant[source] = now
-                        else
-                            makeToast(source, _U('planting_text'), _U('planting_no_seed'))
-                        end
-                    else
-                        makeToast(source, _U('planting_text'), _U('planting_too_fast'))
-                    end
-                end)
+                -- ESX.RegisterUsableItem(Config.Items.Seed, function(source)
+                --     local now = os.time()
+                --     local last = lastPlant[source] or 0
+                --     if now > last + (Config.ActionTime/1000) then
+                --         if HasItem(source, Config.Items.Seed) then
+                --             TriggerClientEvent('esx_uteknark:attempt_plant', source)
+                --             lastPlant[source] = now
+                --         else
+                --             makeToast(source, _U('planting_text'), _U('planting_no_seed'))
+                --         end
+                --     else
+                --         makeToast(source, _U('planting_text'), _U('planting_too_fast'))
+                --     end
+                -- end)
             end
         end)
         Citizen.Wait(1000)
@@ -285,17 +285,17 @@ Citizen.CreateThread(function()
         for id, plant in pairs(cropstate.index) do
             if type(id) == 'number' then -- Because of the whole "hashtable = true" thing
                 local stageData = Growth[plant.data.stage]
-                local growthTime = (stageData.time * 60 * Config.TimeMultiplier)
+                local growthTime = (stageData.time * 60 * Config.Seeds[plant.data.seedtype].timemultiplier)
                 local soilQuality = Config.Soil[plant.data.soil] or 1.0
 
                 if stageData.interact then
-                    local relevantTime = plant.data.time + ((growthTime / soilQuality) * Config.TimeMultiplier)
+                    local relevantTime = plant.data.time + ((growthTime / soilQuality) * Config.Seeds[plant.data.seedtype].timemultiplier)
                     if now >= relevantTime then
                         verbose('Plant',id,'has died: No interaction in time')
                         cropstate:remove(id)
                     end
                 else
-                    local relevantTime = plant.data.time + ((growthTime * soilQuality) * Config.TimeMultiplier)
+                    local relevantTime = plant.data.time + ((growthTime * soilQuality) * Config.Seeds[plant.data.seedtype].timemultiplier)
                     if now >= relevantTime then
                         if plant.data.stage < #Growth then
                             verbose('Plant',id,'has grown to stage',plant.data.stage + 1)

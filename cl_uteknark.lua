@@ -233,10 +233,10 @@ AddEventHandler ('esx_uteknark:do', function(scenarioName, location)
 end)
 
 RegisterNetEvent('esx_uteknark:attempt_plant')
-AddEventHandler ('esx_uteknark:attempt_plant', function()
+AddEventHandler ('esx_uteknark:attempt_plant', function(seedtype)
     local plantable, message, location, _, soil = getPlantingLocation()
     if plantable then
-        TriggerServerEvent('esx_uteknark:success_plant', location, soil)
+        TriggerServerEvent('esx_uteknark:success_plant', location, soil, seedtype)
         lastAction = GetGameTimer()
     else
         makeToast(_U('planting_text'), _U(message))
