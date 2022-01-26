@@ -6,23 +6,23 @@ local tickTimes = {}
 local tickPlantCount = 0
 local VERSION = '1.1.4'
 
-AddEventHandler('playerDropped',function(why)
+AddEventHandler('playerDropped', function(why)
     lastPlant[source] = nil
 end)
 
-function log (...)
-    local numElements = select('#',...)
+function log(...)
+    local numElements = select('#', ...)
     local elements = {...}
     local line = ''
-    local prefix = '['..os.date("%H:%M:%S")..'] '
+    local prefix = '[' .. os.date("%H:%M:%S") .. '] '
     suffix = '\n'
-    local resourceName = '<'..GetCurrentResourceName()..'>'
+    local resourceName = '<' .. GetCurrentResourceName() .. '>'
 
-    for i=1,numElements do
+    for i = 1, numElements do
         local entry = elements[i]
-        line = line..' '..tostring(entry)
+        line = line .. ' ' .. tostring(entry)
     end
-    Citizen.Trace(prefix..resourceName..line..suffix)
+    Citizen.Trace(prefix .. resourceName .. line .. suffix)
 end
 
 function verbose(...)
@@ -46,7 +46,7 @@ function HasItem(who, what, count)
         log("HasItem: Failed to resolve xPlayer from", who)
         return false
     end
-    local itemspec =  xPlayer.getInventoryItem(what)
+    local itemspec = xPlayer.getInventoryItem(what)
     if itemspec then
         if itemspec.count >= count then
             return true
@@ -70,7 +70,7 @@ function TakeItem(who, what, count)
         log("TakeItem: Failed to resolve xPlayer from", who)
         return false
     end
-    local itemspec =  xPlayer.getInventoryItem(what)
+    local itemspec = xPlayer.getInventoryItem(what)
     if itemspec then
         if itemspec.count >= count then
             xPlayer.removeInventoryItem(what, count)
@@ -95,7 +95,7 @@ function GiveItem(who, what, count)
         log("GiveItem: Failed to resolve xPlayer from", who)
         return false
     end
-    local itemspec =  xPlayer.getInventoryItem(what)
+    local itemspec = xPlayer.getInventoryItem(what)
     if itemspec then
         if not itemspec.limit or itemspec.limit == -1 or itemspec.count + count <= itemspec.limit then
             xPlayer.addInventoryItem(what, count)
@@ -116,40 +116,42 @@ function inChat(target, message)
     if target == 0 then
         log(message)
     else
-        TriggerClientEvent('chat:addMessage',target,{args={'UteKnark', message}})
+        TriggerClientEvent('chat:addMessage', target, {
+            args = {'UteKnark', message}
+        })
     end
 end
 
 function plantSeed(location, soil, seedtype)
-    
+
     local hits = cropstate.octree:searchSphere(location, Config.Distance.Space)
     if #hits > 0 then
         return false
     end
 
-    verbose('Planting at',location,'in soil', soil)
+    verbose('Planting ', seedtype, ' at', location, 'in soil', soil)
     cropstate:plant(location, soil, seedtype)
     return true
 end
 
 function doScenario(who, what, where)
-    verbose('Telling', who,'to',what,'at',where)
+    verbose('Telling', who, 'to', what, 'at', where)
     TriggerClientEvent('esx_uteknark:do', who, what, where)
 end
 
 RegisterNetEvent('esx_uteknark:success_plant')
-AddEventHandler ('esx_uteknark:success_plant', function(location, soil, seedtype)
+AddEventHandler('esx_uteknark:success_plant', function(location, soil, seedtype)
     local src = source
     if oneSyncEnabled and false then -- "and false" because something is weird in my OneSync stuff
         local ped = GetPlayerPed(src)
-        --log('ped:',ped)
+        -- log('ped:',ped)
         local pedLocation = GetEntityCoords(ped)
-        --log('pedLocation:',pedLocation)
-        --log('location:', location)
+        -- log('pedLocation:',pedLocation)
+        -- log('location:', location)
         local distance = #(pedLocation - location)
         if distance > Config.Distance.Interact then
             if distance > 10 then
-                log(GetPlayerName(src),'attempted planting at',distance..'m - Cheating?')
+                log(GetPlayerName(src), 'attempted planting at', distance .. 'm - Cheating?')
             end
             makeToast(src, _U('planting_text'), _U('planting_too_far'))
             return
@@ -178,15 +180,14 @@ AddEventHandler ('esx_uteknark:success_plant', function(location, soil, seedtype
 end)
 
 RegisterNetEvent('esx_uteknark:log')
-AddEventHandler ('esx_uteknark:log',function(...)
+AddEventHandler('esx_uteknark:log', function(...)
     local src = source
-    log(src,GetPlayerName(src),...)
+    log(src, GetPlayerName(src), ...)
 end)
 
 RegisterNetEvent('esx_uteknark:test_forest')
-AddEventHandler ('esx_uteknark:test_forest',function(forest)
+AddEventHandler('esx_uteknark:test_forest', function(forest)
     local src = source
-
 
     if IsPlayerAceAllowed(src, 'command.uteknark') then
 
@@ -198,7 +199,7 @@ AddEventHandler ('esx_uteknark:test_forest',function(forest)
             end
         end
 
-        log(GetPlayerName(src),'('..src..') is magically planting a forest of',#forest,'plants')
+        log(GetPlayerName(src), '(' .. src .. ') is magically planting a forest of', #forest, 'plants')
         for i, tree in ipairs(forest) do
             cropstate:plant(tree.location, soil, tree.stage)
             if i % 25 == 0 then
@@ -206,7 +207,7 @@ AddEventHandler ('esx_uteknark:test_forest',function(forest)
             end
         end
     else
-        log('OY!', GetPlayerName(src),'with ID',src,'tried to spawn a test forest, BUT IS NOT ALLOWED!')
+        log('OY!', GetPlayerName(src), 'with ID', src, 'tried to spawn a test forest, BUT IS NOT ALLOWED!')
     end
 end)
 
@@ -220,6 +221,22 @@ function keyCount(tbl)
     return count
 end
 
+RegisterNetEvent('uteknark:useseed')
+AddEventHandler('uteknark:useseed', function(seed)
+    local now = os.time()
+    local last = lastPlant[source] or 0
+    if now > last + (Config.ActionTime / 1000) then
+        if HasItem(source, seed) then
+            TriggerClientEvent('esx_uteknark:attempt_plant', source, seed)
+            lastPlant[source] = now
+        else
+            makeToast(source, _U('planting_text'), _U('planting_no_seed'))
+        end
+    else
+        makeToast(source, _U('planting_text'), _U('planting_too_fast'))
+    end
+end)
+
 Citizen.CreateThread(function()
     local ESXTries = 60
     local itemsLoaded = false
@@ -228,27 +245,29 @@ Citizen.CreateThread(function()
             ESX = obj
             if keyCount(ESX.Items) > 0 then
                 itemsLoaded = true
-                for forWhat,itemName in pairs(Config.Items) do
+                for forWhat, itemName in pairs(Config.Items) do
                     if ESX.Items[itemName] then
-                        log(forWhat,'item in configuration ('..itemName..') found in ESX: Good!')
+                        log(forWhat, 'item in Configuration (' .. itemName .. ') found in ESX: Good!')
                     else
-                        log('WARNING:',forWhat,'item in cofiguration ('..itemName..') does not exist!')
+                        log('WARNING:', forWhat, 'item in cofiguration (' .. itemName .. ') does not exist!')
                     end
                 end
-                -- ESX.RegisterUsableItem(Config.Items.Seed, function(source)
-                --     local now = os.time()
-                --     local last = lastPlant[source] or 0
-                --     if now > last + (Config.ActionTime/1000) then
-                --         if HasItem(source, Config.Items.Seed) then
-                --             TriggerClientEvent('esx_uteknark:attempt_plant', source)
-                --             lastPlant[source] = now
-                --         else
-                --             makeToast(source, _U('planting_text'), _U('planting_no_seed'))
-                --         end
-                --     else
-                --         makeToast(source, _U('planting_text'), _U('planting_too_fast'))
-                --     end
-                -- end)
+                for k, v in pairs(Config.Seeds) do
+                    ESX.RegisterUsableItem(v.name, function(source)
+                        local now = os.time()
+                        local last = lastPlant[source] or 0
+                        if now > last + (Config.ActionTime / 1000) then
+                            if HasItem(source, v.name) then
+                                TriggerClientEvent('esx_uteknark:attempt_plant', source, v.name)
+                                lastPlant[source] = now
+                            else
+                                makeToast(source, _U('planting_text'), _U('planting_no_seed'))
+                            end
+                        else
+                            makeToast(source, _U('planting_text'), _U('planting_too_fast'))
+                        end
+                    end)
+                end
             end
         end)
         Citizen.Wait(1000)
@@ -270,7 +289,7 @@ Citizen.CreateThread(function()
                 if plantCount == 1 then
                     log('Uteknark loaded a single plant!')
                 else
-                    log('Uteknark loaded',plantCount,'plants')
+                    log('Uteknark loaded', plantCount, 'plants')
                 end
             end)
             databaseReady = true
@@ -285,23 +304,28 @@ Citizen.CreateThread(function()
         for id, plant in pairs(cropstate.index) do
             if type(id) == 'number' then -- Because of the whole "hashtable = true" thing
                 local stageData = Growth[plant.data.stage]
-                local growthTime = (stageData.time * 60 * Config.Seeds[plant.data.seedtype].timemultiplier)
+                local timemultiplier = Config.Seeds[plant.data.seedtype].timemultiplier or 1.0
+                local growthTime = (stageData.time * 60 * timemultiplier)
                 local soilQuality = Config.Soil[plant.data.soil] or 1.0
 
                 if stageData.interact then
-                    local relevantTime = plant.data.time + ((growthTime / soilQuality) * Config.Seeds[plant.data.seedtype].timemultiplier)
+                    local relevantTime = plant.data.time +
+                                             ((growthTime / soilQuality) *
+                                                 Config.Seeds[plant.data.seedtype].timemultiplier)
                     if now >= relevantTime then
-                        verbose('Plant',id,'has died: No interaction in time')
+                        verbose('Plant', id, 'has died: No interaction in time')
                         cropstate:remove(id)
                     end
                 else
-                    local relevantTime = plant.data.time + ((growthTime * soilQuality) * Config.Seeds[plant.data.seedtype].timemultiplier)
+                    local relevantTime = plant.data.time +
+                                             ((growthTime * soilQuality) *
+                                                 Config.Seeds[plant.data.seedtype].timemultiplier)
                     if now >= relevantTime then
                         if plant.data.stage < #Growth then
-                            verbose('Plant',id,'has grown to stage',plant.data.stage + 1)
+                            verbose('Plant', id, 'has grown to stage', plant.data.stage + 1)
                             cropstate:update(id, plant.data.stage + 1)
                         else
-                            verbose('Plant',id,'has died: Ran out of stages')
+                            verbose('Plant', id, 'has died: Ran out of stages')
                             cropstate:remove(id)
                         end
                     end
@@ -338,7 +362,7 @@ local commands = {
                 if args[2] and string.match(args[2], "^%d+$") then
                     local stage = tonumber(args[2])
                     if stage > 0 and stage <= #Growth then
-                        log(source,GetPlayerName(source),'set plant',plant,'to stage',stage)
+                        log(source, GetPlayerName(source), 'set plant', plant, 'to stage', stage)
                         cropstate:update(plant, stage)
                     else
                         inChat(source, string.format("%i is an invalid stage", stage))
@@ -347,7 +371,7 @@ local commands = {
                     inChat(source, "What stage?")
                 end
             else
-                inChat(source,string.format("Plant %i does not exist!", plant))
+                inChat(source, string.format("Plant %i does not exist!", plant))
             end
         else
             inChat(source, "What plant, you say?")
@@ -364,7 +388,9 @@ local commands = {
             end
 
             local randomStage = false
-            if args[2] then randomStage = true end
+            if args[2] then
+                randomStage = true
+            end
 
             TriggerClientEvent('esx_uteknark:test_forest', source, count, randomStage)
 
@@ -373,14 +399,14 @@ local commands = {
     stats = function(source, args)
         if cropstate.loaded then
             local totalTime = 0
-            for i,time in ipairs(tickTimes) do
+            for i, time in ipairs(tickTimes) do
                 totalTime = totalTime + time
             end
             local tickTimeAverage = totalTime / #tickTimes
             inChat(source, string.format("Tick time average: %.1fms", tickTimeAverage))
             inChat(source, string.format("Plant count: %i", tickPlantCount))
         else
-            inChat(source,'Not loaded yet')
+            inChat(source, 'Not loaded yet')
         end
     end,
     groundmat = function(source, args)
@@ -396,7 +422,7 @@ local commands = {
         else
             TriggerClientEvent('esx_uteknark:pyromaniac', source)
         end
-    end,
+    end
 }
 
 RegisterCommand('uteknark', function(source, args, raw)
@@ -405,7 +431,7 @@ RegisterCommand('uteknark', function(source, args, raw)
         if commands[directive] then
             if #args > 1 then
                 local newArgs = {}
-                for i,entry in ipairs(args) do
+                for i, entry in ipairs(args) do
                     if i > 1 then
                         table.insert(newArgs, entry)
                     end
@@ -414,13 +440,13 @@ RegisterCommand('uteknark', function(source, args, raw)
             else
                 args = {}
             end
-            commands[directive](source,args)
+            commands[directive](source, args)
         elseif source == 0 then
             log('Invalid directive: ' .. directive)
         else
-            inChat(source,_U('command_invalid', directive))
+            inChat(source, _U('command_invalid', directive))
         end
     else
         inChat(source, _U('command_empty', VERSION))
     end
-end,true)
+end, true)

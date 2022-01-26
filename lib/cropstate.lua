@@ -1,22 +1,22 @@
 local onServer = IsDuplicityVersion()
 local cropstateMethods = {
-    plant = function(instance, location, soil, stage, seedtype)
+    plant = function(instance, location, soil, seedtype, stage)
         if onServer then
             stage = stage or 1
-            MySQL.Async.insert("INSERT INTO `uteknark` (`x`, `y`, `z`, `soil`, `stage`, `seedtype`) VALUES (@x, @y, @z, @soil, @stage, @seedtype);",
-            {
-                ['@x'] = location.x,
-                ['@y'] = location.y,
-                ['@z'] = location.z,
-                ['@soil'] = soil,
-                ['@stage'] = stage,
-                ['@seedtype'] = seedtype,
-            },
-            function(id)
-                instance:import(id, location, stage, os.time(), soil)
-                TriggerClientEvent('esx_uteknark:planted',-1, id, location, stage)
-                verbose('Plant',id,'was planted.')
-            end)
+            MySQL.Async.insert(
+                "INSERT INTO `uteknark` (`x`, `y`, `z`, `soil`, `stage`, `seedtype`) VALUES (@x, @y, @z, @soil, @stage, @seed);",
+                {
+                    ['@x'] = location.x,
+                    ['@y'] = location.y,
+                    ['@z'] = location.z,
+                    ['@soil'] = soil,
+                    ['@stage'] = stage,
+                    ['@seed'] = seedtype
+                }, function(id)
+                    instance:import(id, location, stage, os.time(), soil, seedtype)
+                    TriggerClientEvent('esx_uteknark:planted', -1, id, location, stage)
+                    verbose('Plant', id, 'was planted.')
+                end)
         else
             Citizen.Trace("Attempt to cropstate:plant on client. Not going to work.\n")
         end
@@ -24,27 +24,36 @@ local cropstateMethods = {
     load = function(instance, callback)
         if onServer then
             verbose('Loading...')
-            MySQL.Async.fetchAll("SELECT `id`, `stage`, UNIX_TIMESTAMP(`time`) AS `time`, `x`, `y`, `z`, `soil`, `seedtype` FROM `uteknark`;", 
-            {},
-            function(rows)
-                Citizen.CreateThread(function()
-                    for rownum,row in ipairs(rows) do
-                        instance:import(row.id, vector3(row.x, row.y, row.z), row.stage, row.time, row.soil, row.seedtype)
-                        if rownum % 50 == 0 then
-                            Citizen.Wait(0)
+            MySQL.Async.fetchAll(
+                "SELECT `id`, `stage`, UNIX_TIMESTAMP(`time`) AS `time`, `x`, `y`, `z`, `soil`, `seedtype` FROM `uteknark`;",
+                {}, function(rows)
+                    Citizen.CreateThread(function()
+                        for rownum, row in ipairs(rows) do
+                            instance:import(row.id, vector3(row.x, row.y, row.z), row.stage, row.time, row.soil,
+                                row.seedtype)
+                            if rownum % 50 == 0 then
+                                Citizen.Wait(0)
+                            end
                         end
-                    end
-                    if callback then callback(#rows) end
-                    instance.loaded = true
-                    verbose('Load complete')
+                        if callback then
+                            callback(#rows)
+                        end
+                        instance.loaded = true
+                        verbose('Load complete')
+                    end)
                 end)
-            end)
         else
             Citizen.Trace("Attempt to cropstate:load on client. Not going to work\n")
         end
     end,
     import = function(instance, id, location, stage, time, soil, seedtype)
-        local success, object = instance.octree:insert(location, 0.01, {id=id, stage=stage, time=time, soil=soil, seedtype=seedtype})
+        local success, object = instance.octree:insert(location, 0.01, {
+            id = id,
+            stage = stage,
+            time = time,
+            soil = soil,
+            seedtype = seedtype
+        })
         if not success then
             Citizen.Trace(string.format("Uteknark failed to import plant with ID %i into octree\n", id))
         end
@@ -55,13 +64,12 @@ local cropstateMethods = {
         plant.data.stage = stage
         if onServer then
             plant.data.time = os.time()
-            MySQL.Async.execute("UPDATE `uteknark` SET `stage` = @stage WHERE `id` = @id LIMIT 1;",
-            {
+            MySQL.Async.execute("UPDATE `uteknark` SET `stage` = @stage WHERE `id` = @id LIMIT 1;", {
                 ['@id'] = id,
-                ['@stage'] = stage,
+                ['@stage'] = stage
             }, function(_)
                 TriggerClientEvent('esx_uteknark:update', -1, id, stage)
-                verbose('Set plant',id,'to stage',stage)
+                verbose('Set plant', id, 'to stage', stage)
             end)
         elseif plant.data.object then
             if DoesEntityExist(plant.data.object) then
@@ -84,14 +92,14 @@ local cropstateMethods = {
         end
         instance.index[id] = nil
         if onServer then
-            MySQL.Async.execute("DELETE FROM `uteknark` WHERE `id` = @id LIMIT 1;",
-            { ['@id'] = id },
-            function()
+            MySQL.Async.execute("DELETE FROM `uteknark` WHERE `id` = @id LIMIT 1;", {
+                ['@id'] = id
+            }, function()
                 TriggerClientEvent('esx_uteknark:removePlant', -1, id)
                 if withPyro then
                     TriggerClientEvent('esx_uteknark:pyromaniac', -1, location)
                 end
-                verbose('Removed plant',id)
+                verbose('Removed plant', id)
             end)
         else
             if object.data.object then
@@ -104,7 +112,7 @@ local cropstateMethods = {
     end,
     bulkData = function(instance, target)
         if onServer then
-            verbose('Preparing bulk plant data for player',target)
+            verbose('Preparing bulk plant data for player', target)
             target = target or -1
             while not instance.loaded do
                 Citizen.Wait(1000)
@@ -112,14 +120,18 @@ local cropstateMethods = {
             local forest = {}
             for id, plant in pairs(instance.index) do
                 if type(id) == 'number' then -- Because there is a key called `hashtable`!
-                    table.insert(forest, {id=id, location=plant.bounds.location, stage=plant.data.stage})
+                    table.insert(forest, {
+                        id = id,
+                        location = plant.bounds.location,
+                        stage = plant.data.stage
+                    })
                 end
             end
             TriggerClientEvent('esx_uteknark:bulk_data', target, forest)
         else
             TriggerServerEvent('esx_uteknark:request_data')
         end
-    end,
+    end
 }
 
 local cropstateMeta = {
@@ -128,69 +140,77 @@ local cropstateMeta = {
     end,
     __index = function(instance, key)
         return instance._methods[key]
-    end,
+    end
 }
 
 cropstate = {
     index = {
-        hashtable = true, -- To *force* lua to make it a hashtable rather than an array.
+        hashtable = true -- To *force* lua to make it a hashtable rather than an array.
     },
-    octree = pOctree(vector3(0,1500,0),vector3(12000,13000,2000)),
+    octree = pOctree(vector3(0, 1500, 0), vector3(12000, 13000, 2000)),
     loaded = false,
-    _methods = cropstateMethods,
+    _methods = cropstateMethods
 }
 
-setmetatable(cropstate,cropstateMeta)
+setmetatable(cropstate, cropstateMeta)
 
 if onServer then
     RegisterNetEvent('esx_uteknark:request_data')
-    AddEventHandler ('esx_uteknark:request_data', function()
+    AddEventHandler('esx_uteknark:request_data', function()
         cropstate:bulkData(source)
     end)
-    
+
     RegisterNetEvent('esx_uteknark:remove')
-    AddEventHandler ('esx_uteknark:remove', function(plantID, nearLocation)
+    AddEventHandler('esx_uteknark:remove', function(plantID, nearLocation)
         local src = source
         local plant = cropstate.index[plantID]
         if plant then
             local plantLocation = plant.bounds.location
-            local distance = #( nearLocation - plantLocation)
+            local distance = #(nearLocation - plantLocation)
             if distance <= Config.Distance.Interact then
                 cropstate:remove(plantID, true)
                 makeToast(src, _U('interact_text'), _U('interact_destroyed'))
                 doScenario(src, 'Destroy', plantLocation)
             else
-                Citizen.Trace(GetPlayerName(src)..' ('..src..') is too far away from '..plantID..' to remove it ('..distance'm)\n')
+                Citizen.Trace(GetPlayerName(src) .. ' (' .. src .. ') is too far away from ' .. plantID ..
+                                  ' to remove it (' .. distance 'm)\n')
             end
         else
-            Citizen.Trace(GetPlayerName(src)..' ('..src..') tried to remove plant '..plantID..': That plant does not exist!\n')
+            Citizen.Trace(GetPlayerName(src) .. ' (' .. src .. ') tried to remove plant ' .. plantID ..
+                              ': That plant does not exist!\n')
             TriggerClientEvent('esx_uteknark:remove', src, plantID)
         end
     end)
 
     RegisterNetEvent('esx_uteknark:frob')
-    AddEventHandler ('esx_uteknark:frob', function(plantID, nearLocation)
+    AddEventHandler('esx_uteknark:frob', function(plantID, nearLocation)
         local src = source
         local plant = cropstate.index[plantID]
         if plant then
             local plantLocation = plant.bounds.location
-            local distance = #( nearLocation - plantLocation)
+            local distance = #(nearLocation - plantLocation)
             if distance <= Config.Distance.Interact then
                 local stageData = Growth[plant.data.stage]
                 if stageData.interact then
                     if stageData.yield then
-                        local yield = math.random(Config.Yield[1], Config.Yield[2])
-                        local seeds = math.random(Config.YieldSeed[1], Config.YieldSeed[2])
-                        if GiveItem(src, Config.Items.Product, yield) then
-                            cropstate:remove(plantID)
-                            doScenario(src, 'Frob', plantLocation)
-                            if seeds > 0 and GiveItem(src, Config.Items.Seed, seeds) then
-                                makeToast(src, _U('interact_text'), _U('interact_harvested', yield, seeds))
+                        local yield = math.random(Config.Seeds[plant.data.seedtype].YieldMin,
+                            Config.Seeds[plant.data.seedtype].YieldMax)
+                        local seeds = math.random(Config.Seeds[plant.data.seedtype].YieldMinSeed,
+                            Config.Seeds[plant.data.seedtype].YieldMaxSeed)
+                        if HasItem(src, Config.Items.Tool, 1) then
+                            if GiveItem(src, Config.Seeds[plant.data.seedtype].reward, yield) then
+                                cropstate:remove(plantID)
+                                doScenario(src, 'Frob', plantLocation)
+                                if seeds > 0 and GiveItem(src, Config.Seeds[plant.data.seedtype].name, seeds) then
+                                    makeToast(src, _U('interact_text'), _U('interact_harvested', yield, seeds))
+                                else
+                                    makeToast(src, _U('interact_text'), _U('interact_harvested', yield, 0))
+                                end
                             else
-                                makeToast(src, _U('interact_text'), _U('interact_harvested', yield, 0))
+                                makeToast(src, _U('interact_text'), _U('interact_full', yield))
                             end
                         else
-                            makeToast(src, _U('interact_text'), _U('interact_full', yield))
+                            makeToast(src, _U('interact_text'), _U('interact_missing_tool', yield))
                         end
                     else
                         if #Growth > plant.data.stage then
@@ -204,19 +224,22 @@ if onServer then
                         end
                     end
                 else
-                    Citizen.Trace(GetPlayerName(src)..' ('..src..') tried to frob plant '..plantID..': That plant is in a non-frobbable stage!\n')
+                    Citizen.Trace(GetPlayerName(src) .. ' (' .. src .. ') tried to frob plant ' .. plantID ..
+                                      ': That plant is in a non-frobbable stage!\n')
                 end
             else
-                Citizen.Trace(GetPlayerName(src)..' ('..src..') is too far away from '..plantID..' to frob it ('..distance'm)\n')
+                Citizen.Trace(GetPlayerName(src) .. ' (' .. src .. ') is too far away from ' .. plantID ..
+                                  ' to frob it (' .. distance 'm)\n')
             end
         else
-            Citizen.Trace(GetPlayerName(src)..' ('..src..') tried to frob plant '..plantID..': That plant does not exist!\n')
+            Citizen.Trace(GetPlayerName(src) .. ' (' .. src .. ') tried to frob plant ' .. plantID ..
+                              ': That plant does not exist!\n')
         end
     end)
 
 else
     RegisterNetEvent('esx_uteknark:bulk_data')
-    AddEventHandler ('esx_uteknark:bulk_data', function(forest)
+    AddEventHandler('esx_uteknark:bulk_data', function(forest)
         for i, plant in ipairs(forest) do
             cropstate:import(plant.id, plant.location, plant.stage)
         end
@@ -224,17 +247,17 @@ else
     end)
 
     RegisterNetEvent('esx_uteknark:planted')
-    AddEventHandler ('esx_uteknark:planted', function(id, location, stage)
+    AddEventHandler('esx_uteknark:planted', function(id, location, stage)
         cropstate:import(id, location, stage)
     end)
-    
+
     RegisterNetEvent('esx_uteknark:update')
-    AddEventHandler ('esx_uteknark:update', function(plantID, stage)
+    AddEventHandler('esx_uteknark:update', function(plantID, stage)
         cropstate:update(plantID, stage)
     end)
 
     RegisterNetEvent('esx_uteknark:removePlant')
-    AddEventHandler ('esx_uteknark:removePlant', function(plantID)
+    AddEventHandler('esx_uteknark:removePlant', function(plantID)
         cropstate:remove(plantID)
     end)
 end

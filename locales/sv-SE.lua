@@ -28,4 +28,5 @@ Locales['sv-SE'] = {
     interact_harvested = 'Växt skördad: %i gräs, %i frön',
     interact_full = 'Du har inte plats med %i mer gräs!',
     interact_missing_item = 'Du har inte det du behöver för att vårda denna växten!',
+    interact_missing_tool = 'Du behöver ett speciellt verktyg för att skörda denna växt!',
 }

@@ -1,27 +1,24 @@
 local table = table
-local plantingTargetOffset = vector3(0,2,-3)
-local plantingSpaceAbove = vector3(0,0,Config.Distance.Above)
+local plantingTargetOffset = vector3(0, 2, -3)
+local plantingSpaceAbove = vector3(0, 0, Config.Distance.Above)
 local rayFlagsLocation = 17
 local rayFlagsObstruction = 273
 local activePlants = {}
 
-local registerStrings = {
-    'status_active',
-    'status_passive',
-}
+local registerStrings = {'status_active', 'status_passive'}
 
-for i,entry in ipairs(registerStrings) do
-    AddTextEntry('uteknark_'..entry, _U(entry))
+for i, entry in ipairs(registerStrings) do
+    AddTextEntry('uteknark_' .. entry, _U(entry))
 end
 
-function interactHelp(stage,action)
+function interactHelp(stage, action)
     BeginTextCommandDisplayHelp('uteknark_status_active')
     AddTextComponentInteger(stage)
     AddTextComponentInteger(#Growth)
     AddTextComponentSubstringPlayerName(action)
     EndTextCommandDisplayHelp(0, false, false, 1)
 end
-function passiveHelp(stage,status)
+function passiveHelp(stage, status)
     BeginTextCommandDisplayHelp('uteknark_status_passive')
     AddTextComponentInteger(stage)
     AddTextComponentInteger(#Growth)
@@ -29,7 +26,7 @@ function passiveHelp(stage,status)
     EndTextCommandDisplayHelp(0, false, false, 1)
 end
 
-function makeToast(subject,message)
+function makeToast(subject, message)
     local dict = 'bkr_prop_weed'
     local icon = 'prop_cannabis_leaf_dprop_cannabis_leaf_a'
     if not HasStreamedTextureDictLoaded(dict) then
@@ -42,44 +39,34 @@ function makeToast(subject,message)
     -- BeginTextCommandThefeedPost("STRING")
     SetNotificationTextEntry("STRING")
     AddTextComponentSubstringPlayerName(message)
-    --EndTextCommandThefeedPostMessagetext(
-    SetNotificationMessage(
-        dict, -- texture dict
-        icon, -- texture name
-        true, -- fade
-        0, -- icon type
-        'UteKnark', -- Sender
-        subject
-    )
-    --EndTextCommandThefeedPostTicker(
-    DrawNotification(
-        false, -- important
-        false -- has tokens
+    -- EndTextCommandThefeedPostMessagetext(
+    SetNotificationMessage(dict, -- texture dict
+    icon, -- texture name
+    true, -- fade
+    0, -- icon type
+    'UteKnark', -- Sender
+    subject)
+    -- EndTextCommandThefeedPostTicker(
+    DrawNotification(false, -- important
+    false -- has tokens
     )
     SetStreamedTextureDictAsNoLongerNeeded(icon)
 end
 
 function serverlog(...)
-    TriggerServerEvent('esx_uteknark:log',...)
+    TriggerServerEvent('esx_uteknark:log', ...)
 end
 
 RegisterNetEvent('esx_uteknark:make_toast')
-AddEventHandler ('esx_uteknark:make_toast', function(subject,message)
+AddEventHandler('esx_uteknark:make_toast', function(subject, message)
     makeToast(subject, message)
 end)
-
 
 function flatEnough(surfaceNormal)
     local x = math.abs(surfaceNormal.x)
     local y = math.abs(surfaceNormal.y)
     local z = math.abs(surfaceNormal.z)
-    return (
-        x <= Config.MaxGroundAngle
-        and
-        y <= Config.MaxGroundAngle
-        and
-        z >= 1.0 - Config.MaxGroundAngle
-    )
+    return (x <= Config.MaxGroundAngle and y <= Config.MaxGroundAngle and z >= 1.0 - Config.MaxGroundAngle)
 end
 
 function getPlantingLocation(visible)
@@ -102,7 +89,7 @@ function getPlantingLocation(visible)
         debug('Surface normal:', surfaceNormal)
 
         if Config.Soil[material] then
-            debug('Soil quality:',Config.Soil[material])
+            debug('Soil quality:', Config.Soil[material])
             if flatEnough(surfaceNormal) then
                 local plantDistance = #(playerCoord - hitLocation)
                 debug(plantDistance)
@@ -125,7 +112,7 @@ function getPlantingLocation(visible)
                         end
                         local aboveTarget = hitLocation + plantingSpaceAbove
                         local aboveRay = StartShapeTestRay(hitLocation, aboveTarget, rayFlagsObstruction, ped, 7)
-                        local _,hitAbove,hitAbovePoint = GetShapeTestResult(aboveRay)
+                        local _, hitAbove, hitAbovePoint = GetShapeTestResult(aboveRay)
                         if hitAbove == 1 then
                             if visible then
                                 debug('Obstructed above')
@@ -139,7 +126,7 @@ function getPlantingLocation(visible)
                                 DebugSphere(hitAbovePoint, 0.1, 255, 0, 0, 100)
                                 debug('~g~planting OK')
                             end
-                            return true,'planting_ok', hitLocation, surfaceNormal, material
+                            return true, 'planting_ok', hitLocation, surfaceNormal, material
                         end
                     end
                 else
@@ -188,7 +175,7 @@ function GetHeadingFromPoints(a, b)
         return 0.0
     end
 
-    local theta = math.atan(b.x - a.x,a.y - b.y)
+    local theta = math.atan(b.x - a.x, a.y - b.y)
     if theta < 0.0 then
         theta = theta + (math.pi * 2)
     end
@@ -196,7 +183,7 @@ function GetHeadingFromPoints(a, b)
 end
 
 local inScenario = false
-local WEAPON_UNARMED = `WEAPON_UNARMED`
+local WEAPON_UNARMED = WEAPON_UNARMED
 local lastAction = 0
 function RunScenario(name, facing)
     local playerPed = PlayerPedId()
@@ -212,7 +199,7 @@ function RunScenario(name, facing)
 end
 
 RegisterNetEvent('esx_uteknark:do')
-AddEventHandler ('esx_uteknark:do', function(scenarioName, location)
+AddEventHandler('esx_uteknark:do', function(scenarioName, location)
     if Config.Scenario[scenarioName] then
         print("Got order for scenario " .. scenarioName)
         Citizen.CreateThread(function()
@@ -225,15 +212,15 @@ AddEventHandler ('esx_uteknark:do', function(scenarioName, location)
                 ClearPedTasks(PlayerPedId())
             end
             inScenario = false
-            print("Scenario "..scenarioName.." ends")
+            print("Scenario " .. scenarioName .. " ends")
         end)
     else
-        print("Got ordered to do invalid scenario "..scenarioName)
+        print("Got ordered to do invalid scenario " .. scenarioName)
     end
 end)
 
 RegisterNetEvent('esx_uteknark:attempt_plant')
-AddEventHandler ('esx_uteknark:attempt_plant', function(seedtype)
+AddEventHandler('esx_uteknark:attempt_plant', function(seedtype)
     local plantable, message, location, _, soil = getPlantingLocation()
     if plantable then
         TriggerServerEvent('esx_uteknark:success_plant', location, soil, seedtype)
@@ -245,19 +232,16 @@ end)
 
 function DrawIndicator(location, color)
     local range = 1.0
-    DrawMarker(
-        6, -- type (6 is a vertical and 3D ring)
-        location,
-        0.0, 0.0, 0.0, -- direction (?)
-        -90.0, 0.0, 0.0, -- rotation (90 degrees because the right is really vertical)
-        range, range, range, -- scale
-        color[1], color[2], color[3], color[4],
-        false, -- bob
-        false, -- face camera
-        2, -- dunno, lol, 100% cargo cult
-        false, -- rotates
-        0, 0, -- texture
-        false -- Projects/draws on entities
+    DrawMarker(6, -- type (6 is a vertical and 3D ring)
+    location, 0.0, 0.0, 0.0, -- direction (?)
+    -90.0, 0.0, 0.0, -- rotation (90 degrees because the right is really vertical)
+    range, range, range, -- scale
+    color[1], color[2], color[3], color[4], false, -- bob
+    false, -- face camera
+    2, -- dunno, lol, 100% cargo cult
+    false, -- rotates
+    0, 0, -- texture
+    false -- Projects/draws on entities
     )
 end
 
@@ -273,12 +257,12 @@ Citizen.CreateThread(function()
         end
 
         if #activePlants > 0 then
-            debug(#activePlants,'active plants')
+            debug(#activePlants, 'active plants')
             local myLocation = GetEntityCoords(playerPed)
             local closestDistance
             local closestPlant
             local closestIndex
-            for i,plant in ipairs(activePlants) do
+            for i, plant in ipairs(activePlants) do
                 local distance = #(plant.at - myLocation)
                 if not DoesEntityExist(plant.object) then
                     table.remove(activePlants, i)
@@ -293,10 +277,10 @@ Citizen.CreateThread(function()
                 end
             end
             if closestDistance and not IsPedInAnyVehicle(playerPed) then
-                debug('Closest plant at',closestDistance,'meters')
+                debug('Closest plant at', closestDistance, 'meters')
                 if closestDistance <= Config.Distance.Interact then
                     local stage = Growth[closestPlant.stage]
-                    debug('Closest plant has ID',closestPlant.id)
+                    debug('Closest plant has ID', closestPlant.id)
                     debug('Closest pant is stage', closestPlant.stage)
                     DrawIndicator(closestPlant.at + stage.marker.offset, stage.marker.color)
                     debug('Within intraction distance!')
@@ -337,8 +321,8 @@ Citizen.CreateThread(function()
                 local stage = entry.data.stage or 1
                 local model = Growth[stage].model
                 if not model or not IsModelValid(model) then
-                    Citizen.Trace(tostring(model).." is not a valid model!\n")
-                    model = `prop_mp_cone_01`
+                    Citizen.Trace(tostring(model) .. " is not a valid model!\n")
+                    model = prop_mp_cone_01
                 end
                 if not HasModelLoaded(model) then
                     RequestModel(model)
@@ -348,19 +332,25 @@ Citizen.CreateThread(function()
                     end
                 end
                 if not HasModelLoaded(model) then
-                    Citizen.Trace("Failed to load model for growth stage " .. stage ..", but will retry shortly!\n")
+                    Citizen.Trace("Failed to load model for growth stage " .. stage .. ", but will retry shortly!\n")
                     Citizen.Wait(2500)
                 else
-                    local offset = Growth[stage].offset or vector3(0,0,0)
+                    local offset = Growth[stage].offset or vector3(0, 0, 0)
                     local weed = CreateObject(model, entry.bounds.location + offset, false, false, false)
-                    local heading = math.random(0,359) * 1.0
+                    local heading = math.random(0, 359) * 1.0
                     SetEntityHeading(weed, heading)
                     FreezeEntityPosition(weed, true)
                     SetEntityCollision(weed, false, true)
                     if Config.SetLOD then
                         SetEntityLodDist(weed, math.floor(drawDistance))
                     end
-                    table.insert(activePlants, {node=entry, object=weed, at=entry.bounds.location, stage=stage, id=entry.data.id})
+                    table.insert(activePlants, {
+                        node = entry,
+                        object = weed,
+                        at = entry.bounds.location,
+                        stage = stage,
+                        id = entry.data.id
+                    })
                     entry.data.object = weed
                     SetModelAsNoLongerNeeded(model)
                 end
@@ -370,16 +360,14 @@ Citizen.CreateThread(function()
     end
 end)
 
-
 function deleteActivePlants()
-    for i,plant in ipairs(activePlants) do
+    for i, plant in ipairs(activePlants) do
         if DoesEntityExist(plant.object) then
             DeleteObject(plant.object)
         end
     end
     activePlants = {}
 end
-
 
 AddEventHandler('onResourceStop', function(resourceName)
     if resourceName == GetCurrentResourceName() then
@@ -391,7 +379,7 @@ AddEventHandler('onResourceStop', function(resourceName)
 end)
 
 RegisterNetEvent('esx_uteknark:toggle_debug')
-AddEventHandler ('esx_uteknark:toggle_debug', function()
+AddEventHandler('esx_uteknark:toggle_debug', function()
     if not debug.active then
         serverlog('enabled debugging')
         debug.active = true
@@ -402,26 +390,28 @@ AddEventHandler ('esx_uteknark:toggle_debug', function()
 end)
 
 RegisterNetEvent('esx_uteknark:pyromaniac')
-AddEventHandler ('esx_uteknark:pyromaniac',function(location)
+AddEventHandler('esx_uteknark:pyromaniac', function(location)
     if Config.Burn.Enabled then
         local myLocation = GetEntityCoords(PlayerPedId())
         if not location then
-            location = myLocation + vector3(0,0,-1) -- Because the ped location is one meter off the ground.
+            location = myLocation + vector3(0, 0, -1) -- Because the ped location is one meter off the ground.
         end
         if #(location - myLocation) <= Config.Distance.Draw then
             Citizen.CreateThread(function()
                 local begin = GetGameTimer()
                 if not HasNamedPtfxAssetLoaded(Config.Burn.Effect) then
                     RequestNamedPtfxAsset(Config.Burn.Collection)
-                    while not HasNamedPtfxAssetLoaded(Config.Burn.Collection) and GetGameTimer() <= begin + Config.Burn.Duration do
+                    while not HasNamedPtfxAssetLoaded(Config.Burn.Collection) and GetGameTimer() <= begin +
+                        Config.Burn.Duration do
                         Citizen.Wait(0)
                     end
                     if not HasNamedPtfxAssetLoaded(Config.Burn.Collection) then
-                        print("UteKnark failed to load particle effects asset "..Config.Burn.Collection)
+                        print("UteKnark failed to load particle effects asset " .. Config.Burn.Collection)
                     end
                 end
                 UseParticleFxAsset(Config.Burn.Collection)
-                local handle = StartParticleFxLoopedAtCoord(Config.Burn.Effect, location + Config.Burn.Offset, Config.Burn.Rotation, Config.Burn.Scale * 1.0, false, false, false)
+                local handle = StartParticleFxLoopedAtCoord(Config.Burn.Effect, location + Config.Burn.Offset,
+                    Config.Burn.Rotation, Config.Burn.Scale * 1.0, false, false, false)
                 while GetGameTimer() <= begin + Config.Burn.Duration do
                     Citizen.Wait(0)
                 end
@@ -439,7 +429,7 @@ Citizen.CreateThread(function()
             if debug.active then
                 local plantable, message, where, normal, material = getPlantingLocation(true)
                 if message then
-                    debug('Planting message:',_U(message))
+                    debug('Planting message:', _U(message))
                 end
                 debug:flush()
             end
@@ -456,30 +446,40 @@ Citizen.CreateThread(function()
 end)
 
 RegisterNetEvent('esx_uteknark:groundmat')
-AddEventHandler ('esx_uteknark:groundmat', function()
+AddEventHandler('esx_uteknark:groundmat', function()
     local plantable, message, where, normal, material = getPlantingLocation(true)
-    TriggerEvent("chat:addMessage", {args={'Ground material', material}})
-    serverlog('Ground material:',material)
+    TriggerEvent("chat:addMessage", {
+        args = {'Ground material', material}
+    })
+    serverlog('Ground material:', material)
 
     if Config.Soil[material] then
         local quality = Config.Soil[material]
-        TriggerEvent("chat:addMessage", {args={'Soil quality', quality}})
+        TriggerEvent("chat:addMessage", {
+            args = {'Soil quality', quality}
+        })
         serverlog('Soil quality:', quality)
     else
-        TriggerEvent("chat:addMessage", {args={'Material not whitelisted'}})
+        TriggerEvent("chat:addMessage", {
+            args = {'Material not whitelisted'}
+        })
         serverlog('Material not whitelisted')
     end
 end)
 
 RegisterNetEvent('esx_uteknark:test_forest')
-AddEventHandler ('esx_uteknark:test_forest',function(count, randomStage)
+AddEventHandler('esx_uteknark:test_forest', function(count, randomStage)
     local origin = GetEntityCoords(PlayerPedId())
-    
-    TriggerEvent("chat:addMessage", {args={'UteKnark','Target forest size: '..count}})
-    local column = math.ceil(math.sqrt(count))
-    TriggerEvent("chat:addMessage", {args={'UteKnark','Column size: '..column}})
 
-    local offset = (column * Config.Distance.Space)/2
+    TriggerEvent("chat:addMessage", {
+        args = {'UteKnark', 'Target forest size: ' .. count}
+    })
+    local column = math.ceil(math.sqrt(count))
+    TriggerEvent("chat:addMessage", {
+        args = {'UteKnark', 'Column size: ' .. column}
+    })
+
+    local offset = (column * Config.Distance.Space) / 2
     offset = vector3(-offset, -offset, 5)
     local cursor = origin + offset
     local planted = 0
@@ -491,7 +491,10 @@ AddEventHandler ('esx_uteknark:test_forest',function(count, randomStage)
             if randomStage then
                 stage = math.random(#Growth)
             end
-            table.insert(forest, {location=vector3(cursor.x, cursor.y, Z), stage=stage})
+            table.insert(forest, {
+                location = vector3(cursor.x, cursor.y, Z),
+                stage = stage
+            })
         end
         cursor = cursor + vector3(0, Config.Distance.Space, 0)
         planted = planted + 1
@@ -500,6 +503,8 @@ AddEventHandler ('esx_uteknark:test_forest',function(count, randomStage)
             cursor = cursor + vector3(Config.Distance.Space, -(Config.Distance.Space * column), 0)
         end
     end
-    TriggerEvent("chat:addMessage", {args={'UteKnark', 'Actual viable locations: '..#forest}})
+    TriggerEvent("chat:addMessage", {
+        args = {'UteKnark', 'Actual viable locations: ' .. #forest}
+    })
     TriggerServerEvent('esx_uteknark:test_forest', forest)
 end)

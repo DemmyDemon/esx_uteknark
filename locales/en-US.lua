@@ -28,4 +28,5 @@ Locales['en-US'] = {
     interact_harvested = 'Plant harvested: %i weed, %i seeds',
     interact_full = 'You can\'t hold %i more weed!',
     interact_missing_item = 'You don\'t have what you need to tend this plant!',
+	interact_missing_tool = 'You need a special tool to harvest this plant!',
 }

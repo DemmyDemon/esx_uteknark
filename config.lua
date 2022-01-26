@@ -10,10 +10,9 @@ Config = {
     ActionTime = 10000,   -- How many milliseconds does an action take (planting, destroying, harvesting, tending)
     ScenarioTime = 3000,  -- How long should the scenario/animations run?
     MaxGroundAngle = 0.6, -- How tilted can the ground be and still hold plants?
-    Items = { -- What items are used?
-        Seed = 'weed_seed',     -- Used to plant the weed
-        Tend = nil,             -- Optional item to progress growth cycle
-        Product = 'weed_pooch', -- What item is given when you harvest?
+    Items = {
+	    Tool = 'plantcutters',
+        Tend = 'fertilizer',
     },
     Scenario = {
         Plant = 'WORLD_HUMAN_GARDENER_PLANT',
@@ -29,12 +28,7 @@ Config = {
         Offset      = vector3(0,0,0.2),             -- The distance from the plant root location
         Duration    = 20000,                        -- How long should it burn, in milliseconds?
     },
-    Yield = {5,10}, -- How many Items.Product does each plant yield? {5,10} means "from 5 to 10, inclusive"
-    YieldSeed = {0,1}, -- Same as Yield, except for the amount of seeds you get back
-    TimeMultiplier = 1.0, -- Multiplier for the growth/tend times
     Soil = {
-        -- What soil types can you grow on, and what are their multiplers/divisors? Higher is better.
-        -- 0.5 means growing takes twice the time and you have half as much time to tend or harvest
         [2409420175] = 1.0,
         -- [951832588] = 0.5,
         [3008270349] = 0.8,
@@ -54,19 +48,44 @@ Config = {
     },
 }
 
-Config.Seeds ={
-    ["seed_stardawg"] = {
+Config.Seeds = {
+    ['seed_stardawg'] = {
         timemultiplier = 1.0,
-        reward = 'bud_stardawg'
+        reward = 'bud_stardawg',
+		name = 'seed_stardawg',
+		YieldMin = 1,
+		YieldMax = 3,
+		YieldMinSeed = 1,
+		YieldMaxSeed = 3
     },
 
-    ["seed_lemonhaze"] = {
+    ['seed_lemonhaze'] = {
         timemultiplier = 1.0,
-        reward = 'bud_lemonhaze'
+        reward = 'bud_lemonhaze',
+		name = 'seed_lemonhaze',
+		YieldMin = 3,
+		YieldMax = 5,
+		YieldMinSeed = 0,
+		YieldMaxSeed = 2,
+    },
+	
+    ['seed_purplehaze'] = {
+        timemultiplier = 1.0,
+        reward = 'bud_purplehaze',
+		name = 'seed_purplehaze',
+		YieldMin = 5,
+		YieldMax = 7,
+		YieldMinSeed = 0,
+		YieldMaxSeed = 2,
     },
 
     ["seed_strawberryhaze"] = {
         timemultiplier = 1.0,
-        reward = 'bud_strawberryhaze'
-    }
+        reward = 'bud_strawberryhaze',
+		name = 'seed_strawberryhaze',
+		YieldMin = 7,
+		YieldMax = 9,
+		YieldMinSeed = 0,
+		YieldMaxSeed = 1,
+    },
 }

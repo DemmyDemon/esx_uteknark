@@ -1,12 +1,12 @@
-DROP TABLE IF EXISTS `uteknark`;
-
-CREATE TABLE `uteknark` (
-    `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `stage` INT(3) UNSIGNED NOT NULL DEFAULT 1,
-    `time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `x` FLOAT(10) NOT NULL,
-    `y` FLOAT(10) NOT NULL,
-    `z` FLOAT(10) NOT NULL,
-    `soil` BIGINT(20) NOT NULL,
-    INDEX (`stage`, `time`)
-);
+CREATE TABLE IF NOT EXISTS `uteknark` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `stage` int(3) unsigned NOT NULL DEFAULT 1,
+  `time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `x` float NOT NULL,
+  `y` float NOT NULL,
+  `z` float NOT NULL,
+  `soil` bigint(20) NOT NULL,
+  `seedtype` varchar(50) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `stage` (`stage`,`time`)
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb3;
