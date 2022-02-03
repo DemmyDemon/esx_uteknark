@@ -8,5 +8,6 @@ CREATE TABLE `uteknark` (
     `y` FLOAT(10) NOT NULL,
     `z` FLOAT(10) NOT NULL,
     `soil` BIGINT(20) NOT NULL,
+    `index` VARCHAR(50) NULL DEFAULT NULL,
     INDEX (`stage`, `time`)
 );

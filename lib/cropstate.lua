@@ -1,19 +1,20 @@
 local onServer = IsDuplicityVersion()
 local cropstateMethods = {
-    plant = function(instance, location, soil, stage)
+    plant = function(instance, location, soil, index, stage)
         if onServer then
             stage = stage or 1
-            MySQL.Async.insert("INSERT INTO `uteknark` (`x`, `y`, `z`, `soil`, `stage`) VALUES (@x, @y, @z, @soil, @stage);",
+            MySQL.Async.insert("INSERT INTO `uteknark` (`x`, `y`, `z`, `soil`, `stage`, `index`) VALUES (@x, @y, @z, @soil, @stage, @index);",
             {
                 ['@x'] = location.x,
                 ['@y'] = location.y,
                 ['@z'] = location.z,
                 ['@soil'] = soil,
                 ['@stage'] = stage,
+                ['@index'] = index,
             },
             function(id)
-                instance:import(id, location, stage, os.time(), soil)
-                TriggerClientEvent('esx_uteknark:planted',-1, id, location, stage)
+                instance:import(id, location, stage, os.time(), soil, index)
+                TriggerClientEvent('esx_uteknark:planted',-1, id, location, stage, index)
                 verbose('Plant',id,'was planted.')
             end)
         else
@@ -23,12 +24,12 @@ local cropstateMethods = {
     load = function(instance, callback)
         if onServer then
             verbose('Loading...')
-            MySQL.Async.fetchAll("SELECT `id`, `stage`, UNIX_TIMESTAMP(`time`) AS `time`, `x`, `y`, `z`, `soil` FROM `uteknark`;", 
+            MySQL.Async.fetchAll("SELECT `id`, `stage`, UNIX_TIMESTAMP(`time`) AS `time`, `x`, `y`, `z`, `soil`, `index` FROM `uteknark`;", 
             {},
             function(rows)
                 Citizen.CreateThread(function()
                     for rownum,row in ipairs(rows) do
-                        instance:import(row.id, vector3(row.x, row.y, row.z), row.stage, row.time, row.soil)
+                        instance:import(row.id, vector3(row.x, row.y, row.z), row.stage, row.time, row.soil, row.index)
                         if rownum % 50 == 0 then
                             Citizen.Wait(0)
                         end
@@ -42,8 +43,8 @@ local cropstateMethods = {
             Citizen.Trace("Attempt to cropstate:load on client. Not going to work\n")
         end
     end,
-    import = function(instance, id, location, stage, time, soil)
-        local success, object = instance.octree:insert(location, 0.01, {id=id, stage=stage, time=time, soil=soil})
+    import = function(instance, id, location, stage, time, soil, index)
+        local success, object = instance.octree:insert(location, 0.01, {id=id, stage=stage, time=time, soil=soil, index=index})
         if not success then
             Citizen.Trace(string.format("Uteknark failed to import plant with ID %i into octree\n", id))
         end
@@ -111,7 +112,7 @@ local cropstateMethods = {
             local forest = {}
             for id, plant in pairs(instance.index) do
                 if type(id) == 'number' then -- Because there is a key called `hashtable`!
-                    table.insert(forest, {id=id, location=plant.bounds.location, stage=plant.data.stage})
+                    table.insert(forest, {id=id, location=plant.bounds.location, stage=plant.data.stage, index=plant.data.index})
                 end
             end
             TriggerClientEvent('esx_uteknark:bulk_data', target, forest)
@@ -168,7 +169,7 @@ if onServer then
     end)
 
     RegisterNetEvent('esx_uteknark:frob')
-    AddEventHandler ('esx_uteknark:frob', function(plantID, nearLocation)
+    AddEventHandler ('esx_uteknark:frob', function(plantID, nearLocation, index)
         local src = source
         local plant = cropstate.index[plantID]
         if plant then
@@ -180,10 +181,10 @@ if onServer then
                     if stageData.yield then
                         local yield = math.random(Config.Yield[1], Config.Yield[2])
                         local seeds = math.random(Config.YieldSeed[1], Config.YieldSeed[2])
-                        if GiveItem(src, Config.Items.Product, yield) then
+                        if GiveItem(src, Config.Items[index].Product, yield) then
                             cropstate:remove(plantID)
                             doScenario(src, 'Frob', plantLocation)
-                            if seeds > 0 and GiveItem(src, Config.Items.Seed, seeds) then
+                            if seeds > 0 and GiveItem(src, Config.Items[index].Seed, seeds) then
                                 makeToast(src, _U('interact_text'), _U('interact_harvested', yield, seeds))
                             else
                                 makeToast(src, _U('interact_text'), _U('interact_harvested', yield, 0))
@@ -193,7 +194,7 @@ if onServer then
                         end
                     else
                         if #Growth > plant.data.stage then
-                            if not Config.Items.Tend or TakeItem(src, Config.Items.Tend) then
+                            if not Config.Items[index].Tend or TakeItem(src, Config.Items[index].Tend) then
                                 makeToast(src, _U('interact_text'), _U('interact_tended'))
                                 cropstate:update(plantID, plant.data.stage + 1)
                                 doScenario(src, 'Frob', plantLocation)
@@ -217,14 +218,14 @@ else
     RegisterNetEvent('esx_uteknark:bulk_data')
     AddEventHandler ('esx_uteknark:bulk_data', function(forest)
         for i, plant in ipairs(forest) do
-            cropstate:import(plant.id, plant.location, plant.stage)
+            cropstate:import(plant.id, plant.location, plant.stage, nil, nil, plant.index)
         end
         cropstate.loaded = true
     end)
 
     RegisterNetEvent('esx_uteknark:planted')
-    AddEventHandler ('esx_uteknark:planted', function(id, location, stage)
-        cropstate:import(id, location, stage)
+    AddEventHandler ('esx_uteknark:planted', function(id, location, stage, index)
+        cropstate:import(id, location, stage, nil, nil, index)
     end)
     
     RegisterNetEvent('esx_uteknark:update')

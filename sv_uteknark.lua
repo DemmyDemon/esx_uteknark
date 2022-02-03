@@ -1,5 +1,4 @@
 local ESX = nil
-local oneSyncEnabled = GetConvar('onesync_enabled', false)
 local VERBOSE = false
 local lastPlant = {}
 local tickTimes = {}
@@ -29,10 +28,6 @@ function verbose(...)
     if VERBOSE then
         log(...)
     end
-end
-
-if not oneSyncEnabled then
-    log('OneSync not available: Will have to trust client for locations!')
 end
 
 function HasItem(who, what, count)
@@ -120,7 +115,7 @@ function inChat(target, message)
     end
 end
 
-function plantSeed(location, soil)
+function plantSeed(location, soil, index)
     
     local hits = cropstate.octree:searchSphere(location, Config.Distance.Space)
     if #hits > 0 then
@@ -128,7 +123,7 @@ function plantSeed(location, soil)
     end
 
     verbose('Planting at',location,'in soil', soil)
-    cropstate:plant(location, soil)
+    cropstate:plant(location, soil, index)
     return true
 end
 
@@ -138,32 +133,17 @@ function doScenario(who, what, where)
 end
 
 RegisterNetEvent('esx_uteknark:success_plant')
-AddEventHandler ('esx_uteknark:success_plant', function(location, soil)
+AddEventHandler ('esx_uteknark:success_plant', function(location, soil, index)
     local src = source
-    if oneSyncEnabled and false then -- "and false" because something is weird in my OneSync stuff
-        local ped = GetPlayerPed(src)
-        --log('ped:',ped)
-        local pedLocation = GetEntityCoords(ped)
-        --log('pedLocation:',pedLocation)
-        --log('location:', location)
-        local distance = #(pedLocation - location)
-        if distance > Config.Distance.Interact then
-            if distance > 10 then
-                log(GetPlayerName(src),'attempted planting at',distance..'m - Cheating?')
-            end
-            makeToast(src, _U('planting_text'), _U('planting_too_far'))
-            return
-        end
-    end
     if soil and Config.Soil[soil] then
         local hits = cropstate.octree:searchSphere(location, Config.Distance.Space)
         if #hits == 0 then
-            if TakeItem(src, Config.Items.Seed) then
-                if plantSeed(location, soil) then
+            if TakeItem(src, Config.Items[index].Seed) then
+                if plantSeed(location, soil, index) then
                     makeToast(src, _U('planting_text'), _U('planting_ok'))
                     doScenario(src, 'Plant', location)
                 else
-                    GiveItem(src, Config.Items.Seed)
+                    GiveItem(src, Config.Items[index].Seed)
                     makeToast(src, _U('planting_text'), _U('planting_failed'))
                 end
             else
@@ -228,27 +208,32 @@ Citizen.CreateThread(function()
             ESX = obj
             if keyCount(ESX.Items) > 0 then
                 itemsLoaded = true
-                for forWhat,itemName in pairs(Config.Items) do
-                    if ESX.Items[itemName] then
-                        log(forWhat,'item in configuration ('..itemName..') found in ESX: Good!')
-                    else
-                        log('WARNING:',forWhat,'item in cofiguration ('..itemName..') does not exist!')
+                for seed,seeddata in pairs(Config.Items) do
+                    for forWhat,itemName in pairs(seeddata) do
+                        if ESX.Items[itemName] then
+                            log(forWhat,'item in configuration ('..itemName..') found in ESX: Good!')
+                        else
+                            log('WARNING:',forWhat,'item in cofiguration ('..itemName..') does not exist!')
+                        end
                     end
                 end
-                ESX.RegisterUsableItem(Config.Items.Seed, function(source)
-                    local now = os.time()
-                    local last = lastPlant[source] or 0
-                    if now > last + (Config.ActionTime/1000) then
-                        if HasItem(source, Config.Items.Seed) then
-                            TriggerClientEvent('esx_uteknark:attempt_plant', source)
-                            lastPlant[source] = now
+                for index,plantinfo in pairs(Config.Items) do
+                    ESX.RegisterUsableItem(plantinfo.Seed, function(source)
+                        local now = os.time()
+                        local last = lastPlant[source] or 0
+                        if now > last + (Config.ActionTime/1000) then
+                            if HasItem(source, plantinfo.Seed) then
+                                TriggerClientEvent('esx_uteknark:attempt_plant', source, index)
+                                lastPlant[source] = now
+                            else
+                                makeToast(source, _U('planting_text'), _U('planting_no_seed'))
+                            end
                         else
-                            makeToast(source, _U('planting_text'), _U('planting_no_seed'))
+                            makeToast(source, _U('planting_text'), _U('planting_too_fast'))
                         end
-                    else
-                        makeToast(source, _U('planting_text'), _U('planting_too_fast'))
-                    end
-                end)
+                    end)
+                end
+                
             end
         end)
         Citizen.Wait(1000)

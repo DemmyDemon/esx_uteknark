@@ -233,10 +233,10 @@ AddEventHandler ('esx_uteknark:do', function(scenarioName, location)
 end)
 
 RegisterNetEvent('esx_uteknark:attempt_plant')
-AddEventHandler ('esx_uteknark:attempt_plant', function()
+AddEventHandler ('esx_uteknark:attempt_plant', function(index)
     local plantable, message, location, _, soil = getPlantingLocation()
     if plantable then
-        TriggerServerEvent('esx_uteknark:success_plant', location, soil)
+        TriggerServerEvent('esx_uteknark:success_plant', location, soil, index)
         lastAction = GetGameTimer()
     else
         makeToast(_U('planting_text'), _U(message))
@@ -312,7 +312,7 @@ Citizen.CreateThread(function()
                                 interactHelp(closestPlant.stage, _U(stage.label))
                                 if IsControlJustPressed(0, 38) then
                                     lastAction = now
-                                    TriggerServerEvent('esx_uteknark:frob', closestPlant.id, myLocation)
+                                    TriggerServerEvent('esx_uteknark:frob', closestPlant.id, myLocation, closestPlant.index)
                                 end
                             else
                                 passiveHelp(closestPlant.stage, _U(stage.label))
@@ -360,7 +360,7 @@ Citizen.CreateThread(function()
                     if Config.SetLOD then
                         SetEntityLodDist(weed, math.floor(drawDistance))
                     end
-                    table.insert(activePlants, {node=entry, object=weed, at=entry.bounds.location, stage=stage, id=entry.data.id})
+                    table.insert(activePlants, {node=entry, object=weed, at=entry.bounds.location, stage=stage, id=entry.data.id, index=entry.data.index})
                     entry.data.object = weed
                     SetModelAsNoLongerNeeded(model)
                 end
