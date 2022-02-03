@@ -13,52 +13,52 @@ Config = {
     Items = { -- What items are used?
         ['weed_seed_jackherer'] = {
             Seed = 'weed_seed_jackherer',     -- Used to plant the weed
-            Tend = 'duenger',             -- Optional item to progress growth cycle
+            Tend = nil,             -- Optional item to progress growth cycle
             Product = 'weed_pooch_jackherer', -- What item is given when you harvest?
         },
         ['weed_seed_amnesia'] = {
             Seed = 'weed_seed_amnesia',     -- Used to plant the weed
-            Tend = 'duenger',             -- Optional item to progress growth cycle
+            Tend = nil,             -- Optional item to progress growth cycle
             Product = 'weed_pooch_amnesia', -- What item is given when you harvest?
         },
         ['weed_seed_lemonhaze'] = {
             Seed = 'weed_seed_lemonhaze',     -- Used to plant the weed
-            Tend = 'duenger',             -- Optional item to progress growth cycle
+            Tend = nil,             -- Optional item to progress growth cycle
             Product = 'weed_pooch_lemonhaze', -- What item is given when you harvest?
         },
         ['weed_seed_whitewidow'] = {
             Seed = 'weed_seed_whitewidow',     -- Used to plant the weed
-            Tend = 'duenger',             -- Optional item to progress growth cycle
+            Tend = nil,             -- Optional item to progress growth cycle
             Product = 'weed_pooch_whitewidow', -- What item is given when you harvest?
         },
         ['weed_seed_supersilverhaze'] = {
             Seed = 'weed_seed_supersilverhaze',     -- Used to plant the weed
-            Tend = 'duenger',             -- Optional item to progress growth cycle
+            Tend = nil,             -- Optional item to progress growth cycle
             Product = 'weed_pooch_supersilverhaze', -- What item is given when you harvest?
         },
         ['weed_seed_blackcherryrunz'] = {
             Seed = 'weed_seed_blackcherryrunz',     -- Used to plant the weed
-            Tend = 'duenger',             -- Optional item to progress growth cycle
+            Tend = nil,             -- Optional item to progress growth cycle
             Product = 'weed_pooch_blackcherryrunz', -- What item is given when you harvest?
         },
         ['weed_seed_mochi'] = {
             Seed = 'weed_seed_mochi',     -- Used to plant the weed
-            Tend = 'duenger',             -- Optional item to progress growth cycle
+            Tend = nil,             -- Optional item to progress growth cycle
             Product = 'weed_pooch_mochi', -- What item is given when you harvest?
         },
         ['weed_seed_bluesushi'] = {
             Seed = 'weed_seed_bluesushi',     -- Used to plant the weed
-            Tend = 'duenger',             -- Optional item to progress growth cycle
+            Tend = nil,             -- Optional item to progress growth cycle
             Product = 'weed_pooch_bluesushi', -- What item is given when you harvest?
         },
         ['weed_seed_gelato41'] = {
             Seed = 'weed_seed_gelato41',     -- Used to plant the weed
-            Tend = 'duenger',             -- Optional item to progress growth cycle
+            Tend = nil,             -- Optional item to progress growth cycle
             Product = 'weed_pooch_gelato41', -- What item is given when you harvest?
         },
         ['weed_seed_gorillaglue'] = {
             Seed = 'weed_seed_gorillaglue',     -- Used to plant the weed
-            Tend = 'duenger',             -- Optional item to progress growth cycle
+            Tend = nil,             -- Optional item to progress growth cycle
             Product = 'weed_pooch_gorillaglue', -- What item is given when you harvest?
         },
     },
