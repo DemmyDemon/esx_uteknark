@@ -9,6 +9,12 @@ What if you open up the whole map, so every patch of dirt, every lawn and every 
 
 That is exactly what UteKnark does!
 
+# END OF SUPPORT
+
+There is no support given for this resource, nor are there any updates coming. I am no longer playing FiveM, nor am I developing resources for it. It makes no sense to have this repository open for things like issues submission anymore.
+
+Feel free to fork it, though. The [LICENSE](LICENSE) is very permissive.
+
 # Player manual
 
 First you need to get a hold of seeds. How you do this is different from server to server. Ask whatever support staff your server has.
